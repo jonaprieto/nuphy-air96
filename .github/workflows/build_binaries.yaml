@@ -1,0 +1,11 @@
+name: Build QMK firmware
+
+on: [push, workflow_dispatch]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: 'QMK Userspace Build'
+    uses: qmk/.github/.github/workflows/qmk_userspace_build.yml@main
