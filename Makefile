@@ -4,12 +4,13 @@ BIN := nuphy_air96_v2_ansi_$(KM).bin
 .PHONY: build flash
 
 # Same image and steps as CI (qmk/.github qmk_userspace_build.yml).
+# -c: clean build, so objects stamped by the Docker VM clock never go stale.
 build:
 	docker info >/dev/null 2>&1 || colima start
 	docker run --rm -v "$(CURDIR)":/userspace -w /userspace ghcr.io/qmk/qmk_cli:latest sh -c '\
 		pip install -q -r qmk_firmware/requirements.txt && \
 		qmk config user.qmk_home=/userspace/qmk_firmware user.overlay_dir=/userspace >/dev/null && \
-		qmk userspace-compile'
+		qmk userspace-compile -c'
 
 # Board must be in the bootloader: Fn+M+Esc for 3 s on the cable, or plug in holding Esc.
 flash: build
