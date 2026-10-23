@@ -83,3 +83,9 @@ const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT_96_ans
     'L', 'L', 'L', 'L', 'L', 'L',  'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R',
     'L', 'L', 'L',  '*',  'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'
 );
+
+// J+K together sends Esc. Keycodes must match the mod-taps on MAC_BASE.
+const uint16_t PROGMEM jk_combo[] = {RSFT_T(KC_J), RGUI_T(KC_K), COMBO_END};
+combo_t key_combos[] = {
+    COMBO(jk_combo, KC_ESC),
+};
