@@ -2,3 +2,6 @@
 	path = qmk_firmware
 	url = https://github.com/jonaprieto/vial-qmk.git
 	branch = nuphy-air96-v2
+[submodule "vial-gui"]
+	path = vial-gui
+	url = https://github.com/vial-kb/vial-gui
