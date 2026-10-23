@@ -1,3 +1,4 @@
 [submodule "qmk_firmware"]
 	path = qmk_firmware
-	url = https://github.com/ablasik/nuphy-qmk.git
+	url = https://github.com/jonaprieto/vial-qmk.git
+	branch = nuphy-air96-v2
