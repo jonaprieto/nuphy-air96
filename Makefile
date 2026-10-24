@@ -2,7 +2,7 @@ KM  := jonaprieto
 BIN := nuphy_air96_v2_ansi_$(KM).bin
 PY  := .venv/bin/python
 
-.PHONY: build flash gui save
+.PHONY: build flash gui save watch
 
 # Same image and steps as CI (qmk/.github qmk_userspace_build.yml).
 # -c: clean build, so objects stamped by the Docker VM clock never go stale.
@@ -27,8 +27,12 @@ $(PY):
 gui: $(PY)
 	$(PY) tools/vial.py
 
-# Commit and push the layout saved from Vial (File > Save current layout).
+# Commit and push the layout saved from Vial (File > Save current layout) or the menu bar.
 save:
 	git add jonaprieto.vil
 	git diff --cached --quiet && echo "layout unchanged" || { git commit -q -m "layout: update saved Vial layout" && git push -q; }
 
+# Menu bar watcher: link the plugin into SwiftBar's plugin folder.
+SWIFTBAR = $(shell defaults read com.ameba.SwiftBar PluginDirectory)
+watch: $(PY)
+	ln -sf "$(CURDIR)/tools/nuphy-watch.sh" "$(SWIFTBAR)/nuphy-watch.sh"
