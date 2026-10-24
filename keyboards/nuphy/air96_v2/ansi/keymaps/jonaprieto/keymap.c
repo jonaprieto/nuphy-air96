@@ -112,8 +112,23 @@ const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT_96_ans
     'L', 'L', 'L',  '*',  'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'
 );
 
-// Math keys: the symbol, or its LaTeX name while Symbols is held; Shift picks the second of each pair.
+// Menu bar watcher (tools/watch.py): last key and combo, reported on request.
+static uint16_t watch_keys, watch_keycode, watch_combos, watch_combo_keycode;
+static uint8_t  watch_row, watch_col;
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (record->event.pressed) {
+        if (IS_COMBOEVENT(record->event)) {
+            watch_combos++;
+            watch_combo_keycode = keycode;
+        } else if (IS_KEYEVENT(record->event)) {
+            watch_keys++;
+            watch_keycode = keycode;
+            watch_row     = record->event.key.row;
+            watch_col     = record->event.key.col;
+        }
+    }
+
     if (keycode < MA_1 || keycode >= MA_END) {
         return true;
     }
@@ -131,4 +146,27 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         set_mods(mods);
     }
     return false;
+}
+
+// Watcher status: [cmd, version, layer state (4), default layer state (4), mods,
+// caps word, key count (2), last keycode (2), row, col, combo count (2), combo keycode (2)].
+#define WATCH_CMD 0x60
+
+void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
+    if (data[0] != WATCH_CMD) {
+        data[0] = id_unhandled;
+        return;
+    }
+    const uint32_t layers = layer_state, defaults = default_layer_state;
+    data[1] = 1;
+    memcpy(&data[2], &layers, 4);
+    memcpy(&data[6], &defaults, 4);
+    data[10] = get_mods() | get_oneshot_mods();
+    data[11] = is_caps_word_on();
+    memcpy(&data[12], &watch_keys, 2);
+    memcpy(&data[14], &watch_keycode, 2);
+    data[16] = watch_row;
+    data[17] = watch_col;
+    memcpy(&data[18], &watch_combos, 2);
+    memcpy(&data[20], &watch_combo_keycode, 2);
 }
