@@ -71,8 +71,10 @@ the saved layout is loaded.
 adds it as a login item, restarted if it ever crashes; Quit in its menu stops it
 until the next login. It shows the active layer and the last key, and for two
 seconds the combo you just used. Its menu shows held modifiers and Caps Word,
-draws every layer of the current keymap in the browser, changes the tap-hold
-settings, saves the layout to `jonaprieto.vil`, and opens Vial. The keyboard
+changes the tap-hold settings, saves the layout to `jonaprieto.vil`, and opens
+Vial. Show keymap opens a live page: the current keymap with the board's real
+key positions and the same colours as the layer lighting, switching layers as
+you do and flashing each key you press (click a layer to pin it). The keyboard
 side is `tools/watch.py`, on Vial's own protocol code. It needs the USB cable
 (Bluetooth carries no raw HID) and pauses while Vial or `make flash` uses the
 keyboard.

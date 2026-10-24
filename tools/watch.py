@@ -18,9 +18,9 @@ import threading
 import time
 
 import kb
+import keymap_view
 
 WATCH_CMD = 0x60  # answered by raw_hid_receive_kb in keymap.c
-KEYMAP_HTML = kb.CACHE / "keymap.html"
 COMBO_SHOWN = 2.0  # seconds a combo stays in the menu bar title
 MODS = [(0x01, "Ctrl"), (0x02, "Shift"), (0x04, "Opt"), (0x08, "Cmd")]
 SETTINGS = {
@@ -109,6 +109,8 @@ def poll(keyboard):
         "caps_word": r[11],
         "keys": u16(12),
         "keycode": u16(14),
+        "row": r[16],
+        "col": r[17],
         "combos": u16(18),
         "combo_keycode": u16(20),
     }
@@ -176,45 +178,6 @@ def menu(keyboard, labels, s, combo, title):
     show(title, items)
 
 
-def keymap_page(keyboard, labels, current):
-    """Every layer drawn with the board's real key positions; the current one first."""
-    unit = 46
-    width = max(k.x + k.width for k in keyboard.keys) * unit
-    height = max(k.y + k.height for k in keyboard.keys) * unit
-    order = [current] + [n for n in range(keyboard.layers) if n != current]
-    parts = []
-    for n in order:
-        keys = []
-        for k in keyboard.keys:
-            text = labels(keyboard.layout.get((n, k.row, k.col), "KC_NO"))
-            cls = "k" if text else "k empty"
-            keys.append(
-                f'<div class="{cls}" style="left:{k.x * unit}px;top:{k.y * unit}px;'
-                f'width:{k.width * unit - 4}px;height:{k.height * unit - 4}px">'
-                + "<br>".join(html.escape(t) for t in text.split("\n"))
-                + "</div>"
-            )
-        mark = " (active now)" if n == current else ""
-        parts.append(
-            f"<h2>{n} {html.escape(kb.LAYERS[n])}{mark}</h2>"
-            f'<div class="kb" style="width:{width}px;height:{height}px">{"".join(keys)}</div>'
-        )
-    KEYMAP_HTML.write_text(
-        "<!doctype html><meta charset=utf-8><title>Air96 keymap</title><style>"
-        "body{background:#151517;color:#ddd;font:14px -apple-system,sans-serif;margin:24px}"
-        "h2{font-weight:500;margin:28px 0 10px}"
-        ".kb{position:relative}"
-        ".k{position:absolute;box-sizing:border-box;border-radius:6px;background:#34343a;display:flex;"
-        "flex-direction:column;align-items:center;justify-content:center;text-align:center;"
-        "font-size:11px;line-height:1.2;overflow:hidden}"
-        ".empty{background:#222226}"
-        "</style>"
-        "<p>Transparent keys are dark: they do what the layer below does. Edit with Vial (menu bar: Open Vial).</p>"
-        + "".join(parts)
-    )
-    subprocess.run(["open", str(KEYMAP_HTML)])
-
-
 def read_commands():
     for line in sys.stdin:
         COMMANDS.put(line.split())
@@ -229,18 +192,33 @@ def run_commands(keyboard, labels, layers):
         elif cmd == "set":
             keyboard.qmk_settings_set(int(args[0]), int(args[1]))
         elif cmd == "keymap":
-            keymap_page(keyboard, labels, layers.bit_length() - 1 if layers else 0)
+            subprocess.run(["open", SERVER.url])
         elif cmd == "save":
             kb.VIL.write_bytes(keyboard.save_layout())
 
 
+STATE = {"connected": False}  # what the live keymap page polls
+SERVER = None
+
+
 def watch():
+    global SERVER
     kb.CACHE.mkdir(parents=True, exist_ok=True)
     threading.Thread(target=read_commands, daemon=True).start()
+    current = {}
+    SERVER = keymap_view.Server(
+        lambda: keymap_view.page(current["keyboard"], current["labels"])
+        if current.get("keyboard")
+        else "<!doctype html><meta charset=utf-8><p>The Air96 is not connected over USB.",
+        STATE,
+    )
+    (kb.CACHE / "keymap-url").write_text(SERVER.url + "\n")  # for a bookmark-free reopen from the shell
     keyboard = labels = None
     last = shown = None
     combo, combo_at, combos = None, 0.0, None
     while True:
+        if keyboard is None or kb.VIAL_LOCK.exists():
+            STATE["connected"] = False
         if kb.VIAL_LOCK.exists():
             if keyboard:
                 keyboard.dev.close()
@@ -266,6 +244,7 @@ def watch():
                 time.sleep(2)
                 continue
             labels = Labels(keyboard)
+            current.update(keyboard=keyboard, labels=labels)
             last = shown = combos = None
         try:
             s = poll(keyboard)
@@ -285,6 +264,16 @@ def watch():
                 time.time(),
             )
         combos = s["combos"]
+        STATE.update(
+            connected=True,
+            layer=s["layers"].bit_length() - 1 if s["layers"] else 0,
+            latex=bool(s["layers"] & (1 << 6) and s["layers"] & (1 << 7)),
+            keys=s["keys"],
+            row=s["row"],
+            col=s["col"],
+            combos=s["combos"],
+            combo=combo or "",
+        )
         name = layer_name(s["layers"])
         title = (
             f"{name} · {combo}"
@@ -302,7 +291,7 @@ def watch():
         if state != last:
             menu(keyboard, labels, s, combo, title)
             last = state
-        time.sleep(0.1)
+        time.sleep(0.05)
 
 
 if __name__ == "__main__":
