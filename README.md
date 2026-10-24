@@ -35,9 +35,11 @@ the operator macros cyan, other symbols yellow. Nav: arrows blue, word and line
 jumps cyan, editing keys green, PgUp/PgDn purple. Mouse: pointer red, scroll
 orange, clicks yellow. Modifiers are dim white.
 
-Math symbols need macOS's "Unicode Hex Input" keyboard source (System Settings >
-Keyboard > Text Input > Edit, then + and search for it), selected instead of "U.S.".
-Option+letter accents stop working there; shortcuts do not change.
+Math symbols are typed by the menu bar app (`make watch`): for each math key the
+board sends a shortcut (F13-F20 with Ctrl, Opt or Cmd) and the app types the
+symbol, in any app and over Bluetooth too. Give it Accessibility access once
+(System Settings > Privacy & Security > Accessibility > nuphy-watch); macOS may
+ask again after `make watch` rebuilds it. LaTeX output needs nothing.
 
 ## How to change things
 

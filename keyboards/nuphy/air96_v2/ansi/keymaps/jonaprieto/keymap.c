@@ -179,6 +179,15 @@ bool rgb_matrix_indicators_user(void) {
     return true;
 }
 
+// Math keys: the LaTeX name while Symbols is held, else a shortcut the menu bar app turns into
+// the symbol (macOS's Unicode Hex Input garbles typed code points). Shift picks the second of
+// each pair. Key i sends F13 + i % 8 with modifier set i / 8, plus Shift for the second symbol.
+static const uint8_t math_mods[] = {
+    MOD_BIT(KC_LCTL), MOD_BIT(KC_LALT), MOD_BIT(KC_LGUI),
+    MOD_BIT(KC_LCTL) | MOD_BIT(KC_LALT), MOD_BIT(KC_LCTL) | MOD_BIT(KC_LGUI), MOD_BIT(KC_LALT) | MOD_BIT(KC_LGUI),
+};
+_Static_assert(MA_END - MA_1 <= 8 * sizeof(math_mods), "more math keys than shortcuts");
+
 // Menu bar watcher (tools/watch.py): last key and combo, reported on request.
 static uint16_t watch_keys, watch_keycode, watch_combos, watch_combo_keycode;
 static uint8_t  watch_row, watch_col;
@@ -208,7 +217,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         if (IS_LAYER_ON(SYM)) {
             send_string(shift ? k->tex_shift : k->tex);
         } else {
-            send_unicode_string(shift ? k->uc_shift : k->uc);
+            const uint8_t i = keycode - MA_1;
+            const uint8_t m = math_mods[i / 8] | (shift ? MOD_BIT(KC_LSFT) : 0);
+            register_mods(m);
+            tap_code(KC_F13 + i % 8);
+            unregister_mods(m);
         }
         set_mods(mods);
     }

@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Math layer table: one row per key, written to math_keys.h and vial.json.
+"""Math layer table: one row per key, written to math_keys.h, math_keys.json and vial.json.
 
 Each key types a Unicode symbol, or its LaTeX name while the Symbols layer is
-held; Shift picks the second of each pair. Run after editing: python3 tools/math_keys.py
+held; Shift picks the second of each pair. For a symbol the board sends a
+shortcut (see keymap.c) and the menu bar app types the symbol from
+math_keys.json. Run after editing: python3 tools/math_keys.py
 """
 
 import json
@@ -91,7 +93,7 @@ def header():
         "};",
         "",
         "typedef struct {",
-        "    const char *uc, *uc_shift, *tex, *tex_shift;",
+        "    const char *tex, *tex_shift;",
         "} math_key_t;",
         "",
         "// colour group: 0 Greek, 1 sets, 2 relations and logic, 3 operators and brackets",
@@ -99,7 +101,7 @@ def header():
         "",
         "static const math_key_t math_keys[] = {",
         *[
-            f"    {{{c_str(u)}, {c_str(us)}, {c_str(t)}, {c_str(ts)}}}, // {k}"
+            f"    {{{c_str(t)}, {c_str(ts)}}}, // {k}: {u} {us}"
             for k, u, us, t, ts in KEYS
         ],
         "};",
@@ -121,6 +123,8 @@ def vial_keycodes():
 
 def main():
     (KEYMAP / "math_keys.h").write_text(header())
+    symbols = [[u, us] for _, u, us, _, _ in KEYS]
+    (pathlib.Path(__file__).parent / "math_keys.json").write_text(json.dumps(symbols, ensure_ascii=False) + "\n")
     path = KEYMAP / "vial.json"
     vial = json.loads(path.read_text())
     vial["customKeycodes"] = vial["customKeycodes"][:BOARD_KEYCODES] + vial_keycodes()

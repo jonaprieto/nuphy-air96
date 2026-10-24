@@ -52,57 +52,57 @@ enum math_keycodes {
 };
 
 typedef struct {
-    const char *uc, *uc_shift, *tex, *tex_shift;
+    const char *tex, *tex_shift;
 } math_key_t;
 
 // colour group: 0 Greek, 1 sets, 2 relations and logic, 3 operators and brackets
 static const uint8_t math_groups[] = {1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 2, 2, 0, 0, 0, 0, 0, 0, 1, 1, 3, 0, 3, 3, 1, 0, 0, 0, 0, 0, 0, 3, 0, 0, 2, 3, 0, 0, 0, 2, 0, 0, 0, 2, 2, 2};
 
 static const math_key_t math_keys[] = {
-    {"ℕ", "ℕ", "\\mathbb{N}", "\\mathbb{N}"}, // 1
-    {"ℤ", "ℤ", "\\mathbb{Z}", "\\mathbb{Z}"}, // 2
-    {"ℚ", "ℚ", "\\mathbb{Q}", "\\mathbb{Q}"}, // 3
-    {"ℝ", "ℝ", "\\mathbb{R}", "\\mathbb{R}"}, // 4
-    {"ℂ", "ℂ", "\\mathbb{C}", "\\mathbb{C}"}, // 5
-    {"∞", "∞", "\\infty", "\\infty"}, // 6
-    {"∑", "∑", "\\sum", "\\sum"}, // 7
-    {"×", "×", "\\times", "\\times"}, // 8
-    {"∏", "∏", "\\prod", "\\prod"}, // 9
-    {"∫", "∫", "\\int", "\\int"}, // 0
-    {"→", "↔", "\\to", "\\leftrightarrow"}, // MINS
-    {"≠", "≈", "\\neq", "\\approx"}, // EQL
-    {"θ", "Θ", "\\theta", "\\Theta"}, // Q
-    {"ω", "Ω", "\\omega", "\\Omega"}, // W
-    {"ε", "∃", "\\varepsilon", "\\exists"}, // E
-    {"ρ", "ℝ", "\\rho", "\\mathbb{R}"}, // R
-    {"τ", "⊤", "\\tau", "\\top"}, // T
-    {"ψ", "Ψ", "\\psi", "\\Psi"}, // Y
-    {"∪", "∩", "\\cup", "\\cap"}, // U
-    {"∈", "∉", "\\in", "\\notin"}, // I
-    {"∘", "∅", "\\circ", "\\emptyset"}, // O
-    {"π", "Π", "\\pi", "\\Pi"}, // P
-    {"⟨", "⟦", "\\langle", "\\llbracket"}, // LBRC
-    {"⟩", "⟧", "\\rangle", "\\rrbracket"}, // RBRC
-    {"∖", "∣", "\\setminus", "\\mid"}, // BSLS
-    {"α", "∀", "\\alpha", "\\forall"}, // A
-    {"σ", "Σ", "\\sigma", "\\Sigma"}, // S
-    {"δ", "Δ", "\\delta", "\\Delta"}, // D
-    {"φ", "Φ", "\\varphi", "\\Phi"}, // F
-    {"γ", "Γ", "\\gamma", "\\Gamma"}, // G
-    {"η", "⊢", "\\eta", "\\vdash"}, // H
-    {"∂", "∇", "\\partial", "\\nabla"}, // J
-    {"κ", "⊗", "\\kappa", "\\otimes"}, // K
-    {"λ", "Λ", "\\lambda", "\\Lambda"}, // L
-    {"⇒", "⇔", "\\Rightarrow", "\\Leftrightarrow"}, // SCLN
-    {"′", "⁻¹", "'", "^{-1}"}, // QUOT
-    {"ζ", "ℤ", "\\zeta", "\\mathbb{Z}"}, // Z
-    {"ξ", "Ξ", "\\xi", "\\Xi"}, // X
-    {"χ", "ℂ", "\\chi", "\\mathbb{C}"}, // C
-    {"∨", "∧", "\\lor", "\\land"}, // V
-    {"β", "⊥", "\\beta", "\\bot"}, // B
-    {"ν", "¬", "\\nu", "\\neg"}, // N
-    {"μ", "↦", "\\mu", "\\mapsto"}, // M
-    {"≤", "⊆", "\\leq", "\\subseteq"}, // COMM
-    {"≥", "⊇", "\\geq", "\\supseteq"}, // DOT
-    {"≡", "≅", "\\equiv", "\\cong"}, // SLSH
+    {"\\mathbb{N}", "\\mathbb{N}"}, // 1: ℕ ℕ
+    {"\\mathbb{Z}", "\\mathbb{Z}"}, // 2: ℤ ℤ
+    {"\\mathbb{Q}", "\\mathbb{Q}"}, // 3: ℚ ℚ
+    {"\\mathbb{R}", "\\mathbb{R}"}, // 4: ℝ ℝ
+    {"\\mathbb{C}", "\\mathbb{C}"}, // 5: ℂ ℂ
+    {"\\infty", "\\infty"}, // 6: ∞ ∞
+    {"\\sum", "\\sum"}, // 7: ∑ ∑
+    {"\\times", "\\times"}, // 8: × ×
+    {"\\prod", "\\prod"}, // 9: ∏ ∏
+    {"\\int", "\\int"}, // 0: ∫ ∫
+    {"\\to", "\\leftrightarrow"}, // MINS: → ↔
+    {"\\neq", "\\approx"}, // EQL: ≠ ≈
+    {"\\theta", "\\Theta"}, // Q: θ Θ
+    {"\\omega", "\\Omega"}, // W: ω Ω
+    {"\\varepsilon", "\\exists"}, // E: ε ∃
+    {"\\rho", "\\mathbb{R}"}, // R: ρ ℝ
+    {"\\tau", "\\top"}, // T: τ ⊤
+    {"\\psi", "\\Psi"}, // Y: ψ Ψ
+    {"\\cup", "\\cap"}, // U: ∪ ∩
+    {"\\in", "\\notin"}, // I: ∈ ∉
+    {"\\circ", "\\emptyset"}, // O: ∘ ∅
+    {"\\pi", "\\Pi"}, // P: π Π
+    {"\\langle", "\\llbracket"}, // LBRC: ⟨ ⟦
+    {"\\rangle", "\\rrbracket"}, // RBRC: ⟩ ⟧
+    {"\\setminus", "\\mid"}, // BSLS: ∖ ∣
+    {"\\alpha", "\\forall"}, // A: α ∀
+    {"\\sigma", "\\Sigma"}, // S: σ Σ
+    {"\\delta", "\\Delta"}, // D: δ Δ
+    {"\\varphi", "\\Phi"}, // F: φ Φ
+    {"\\gamma", "\\Gamma"}, // G: γ Γ
+    {"\\eta", "\\vdash"}, // H: η ⊢
+    {"\\partial", "\\nabla"}, // J: ∂ ∇
+    {"\\kappa", "\\otimes"}, // K: κ ⊗
+    {"\\lambda", "\\Lambda"}, // L: λ Λ
+    {"\\Rightarrow", "\\Leftrightarrow"}, // SCLN: ⇒ ⇔
+    {"'", "^{-1}"}, // QUOT: ′ ⁻¹
+    {"\\zeta", "\\mathbb{Z}"}, // Z: ζ ℤ
+    {"\\xi", "\\Xi"}, // X: ξ Ξ
+    {"\\chi", "\\mathbb{C}"}, // C: χ ℂ
+    {"\\lor", "\\land"}, // V: ∨ ∧
+    {"\\beta", "\\bot"}, // B: β ⊥
+    {"\\nu", "\\neg"}, // N: ν ¬
+    {"\\mu", "\\mapsto"}, // M: μ ↦
+    {"\\leq", "\\subseteq"}, // COMM: ≤ ⊆
+    {"\\geq", "\\supseteq"}, // DOT: ≥ ⊇
+    {"\\equiv", "\\cong"}, // SLSH: ≡ ≅
 };
