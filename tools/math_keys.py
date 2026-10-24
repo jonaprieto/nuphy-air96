@@ -65,6 +65,15 @@ KEYS = [
 ]
 
 
+# Colour group of each key on the board while Math is on, by its plain symbol.
+GREEK, SETS, RELATIONS = 0, 1, 2  # anything else: operators and brackets (3)
+GROUPS = {GREEK: "αβγδεζηθικλμνξπρστυφχψω", SETS: "ℕℤℚℝℂ∪∈∖", RELATIONS: "→≠⇒≤≥≡∨"}
+
+
+def group(symbol):
+    return next((g for g, chars in GROUPS.items() if symbol in chars), 3)
+
+
 def c_str(s):
     return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
@@ -84,6 +93,9 @@ def header():
         "typedef struct {",
         "    const char *uc, *uc_shift, *tex, *tex_shift;",
         "} math_key_t;",
+        "",
+        "// colour group: 0 Greek, 1 sets, 2 relations and logic, 3 operators and brackets",
+        "static const uint8_t math_groups[] = {" + ", ".join(str(group(k[1])) for k in KEYS) + "};",
         "",
         "static const math_key_t math_keys[] = {",
         *[

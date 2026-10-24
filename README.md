@@ -20,16 +20,20 @@ make flash   # build and flash the firmware (brew install dfu-util)
 | 1 | Mac Fn | hold Fn: F-keys, Bluetooth, lighting; E S D F = Mission Control, Spaces, app windows; A app switcher; Z X V screenshots |
 | 5 | Nav | hold Space: arrows on H J K L, line start/end on Y/O, word jumps on U/I, undo/cut/copy/paste/redo on Z X C V B |
 | 6 | Symbols + Numbers | hold right Cmd: `\ { ( ) }` on the left home row, numpad on the right, `-> => \|> != <= >= :=` on the number row |
-| 7 | Math | hold right Ctrl, or tap it twice to lock: Greek and math symbols; with Shift the capital (or the logic symbol) |
+| 7 | Math | tap right Ctrl to turn it on, tap again to turn it off: Greek and math symbols; with Shift the capital (or the logic symbol) |
 | 7 + 6 | LaTeX | hold right Cmd too: the same keys type `\alpha`, `\forall`, `\mathbb{R}` ... |
 | 8 | Mouse | hold Space + right Cmd: pointer on H J K L, scroll on Y U I O, clicks on N M , |
 
 Layers 2-4 (Windows, Windows Fn, board settings) are the board's own. Combos:
 J+K is Esc, `,`+`.` is Enter, C+V is Tab.
 
-While a layer is held, the keys that do something on it light up in its colour
-and the rest go dark: Fn mint, M mustard, Nav blue, Symbols orange, Math purple,
-LaTeX pink, Mouse red.
+While a layer is on, the keys that do something on it light up and the rest go
+dark. Fn is mint and M mustard; on the others each kind of key has its own colour.
+Math: Greek purple, sets green, relations and logic cyan, operators and brackets
+amber (all pink while they type LaTeX). Symbols: numbers green, brackets orange,
+the operator macros cyan, other symbols yellow. Nav: arrows blue, word and line
+jumps cyan, editing keys green, PgUp/PgDn purple. Mouse: pointer red, scroll
+orange, clicks yellow. Modifiers are dim white.
 
 Math symbols need macOS's "Unicode Hex Input" keyboard source (System Settings >
 Keyboard > Text Input > Edit, then + and search for it), selected instead of "U.S.".

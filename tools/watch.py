@@ -71,6 +71,8 @@ class Labels:
             return f"{self.plain(code & 0xFF)}\nhold {kb.LAYERS[(code >> 8) & 0xF]}"
         if 0x5220 <= code <= 0x523F:
             return f"hold\n{kb.LAYERS[code & 0x1F]}"
+        if 0x5260 <= code <= 0x527F:
+            return f"{kb.LAYERS[code & 0x1F]}\non/off"
         if 0x52C0 <= code <= 0x52DF:
             return f"{kb.LAYERS[code & 0x1F]}\nhold, 2 taps lock"
         if 0x7700 <= code <= 0x777F:

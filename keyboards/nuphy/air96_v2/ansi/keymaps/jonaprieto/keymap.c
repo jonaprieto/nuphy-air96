@@ -34,7 +34,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
    KC_TAB,    KC_Q,      KC_W,      KC_E,        KC_R,         KC_T,      KC_Y,      KC_U,        KC_I,      KC_O,       KC_P,       KC_LBRC,    KC_RBRC,     KC_BSLS,               KC_P7,     KC_P8,     KC_P9,     KC_PPLS,
    LCTL_T(KC_ESC), LCTL_T(KC_A), LALT_T(KC_S), LGUI_T(KC_D), LSFT_T(KC_F), KC_G, KC_H, RSFT_T(KC_J), RGUI_T(KC_K), RALT_T(KC_L), RCTL_T(KC_SCLN), KC_QUOT, KC_ENT,              KC_P4,     KC_P5,     KC_P6,
    KC_LSFT,              KC_Z,      KC_X,        KC_C,         KC_V,      KC_B,      KC_N,        KC_M,      KC_COMM,    KC_DOT,     KC_SLSH,    KC_RSFT,                KC_UP,      KC_P1,     KC_P2,     KC_P3,     KC_PENT,
-   KC_LCTL,   KC_LALT,   KC_LGUI,                              LT(NAV, KC_SPC),                                          MO(SYM),    MO(1),      TT(MATH),     KC_LEFT,   KC_DOWN,    KC_RGHT,   KC_P0,     KC_PDOT),
+   KC_LCTL,   KC_LALT,   KC_LGUI,                              LT(NAV, KC_SPC),                                          MO(SYM),    MO(1),      TG(MATH),     KC_LEFT,   KC_DOWN,    KC_RGHT,   KC_P0,     KC_PDOT),
 // layer 1 Mac Fn
 [MAC_FN] = LAYOUT_96_ansi(
    LOCK_SCR,  KC_F1,     KC_F2,     KC_F3,       KC_F4,        KC_F5,     KC_F6,     KC_F7,       KC_F8,     KC_F9,      KC_F10,     KC_F11,     KC_F12,      PRT_SCR,   KC_INS,     _______,   _______,   _______,   _______,
@@ -83,7 +83,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
    _______,   KC_BSLS,   KC_LCBR,   KC_LPRN,     KC_RPRN,      KC_RCBR,   KC_MINS,   KC_4,        KC_5,      KC_6,       KC_SLSH,    KC_EQL,     _______,                            _______,   _______,   _______,
    _______,              KC_TILD,   KC_PIPE,     KC_LT,        KC_GT,     KC_GRV,    KC_0,        KC_1,      KC_2,       KC_3,       KC_DOT,     _______,                _______,    _______,   _______,   _______,   _______,
    _______,   _______,   _______,                              _______,                                                  _______,    _______,    MO(MATH),    _______,   _______,    _______,   _______,   _______),
-// layer 7 math (hold right Ctrl, tap it twice to lock); LaTeX while Symbols is held too
+// layer 7 math (tap right Ctrl: on, tap again: off); LaTeX while Symbols is held too
 [MATH] = LAYOUT_96_ansi(
    _______,   _______,   _______,   _______,     _______,      _______,   _______,   _______,     _______,   _______,    _______,    _______,    _______,     _______,   _______,    _______,   _______,   _______,   _______,
    _______,   MA_1,      MA_2,      MA_3,        MA_4,         MA_5,      MA_6,      MA_7,        MA_8,      MA_9,       MA_0,       MA_MINS,    MA_EQL,      _______,               _______,   _______,   _______,   _______,
@@ -113,23 +113,54 @@ const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT_96_ans
     'L', 'L', 'L',  '*',  'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'
 );
 
-// While Nav, Symbols, Math or Mouse is held, light the keys that do something there in the
-// layer's colour and turn the rest off, like the board does for Fn (mint) and M (mustard).
-bool rgb_matrix_indicators_user(void) {
-    static const uint8_t colors[][3] = {
-        [NAV - NAV]   = {0x00, 0x60, 0xFF}, // blue
-        [SYM - NAV]   = {0xFF, 0x60, 0x00}, // orange
-        [MATH - NAV]  = {0xA0, 0x00, 0xFF}, // purple
-        [MOUSE - NAV] = {0xFF, 0x10, 0x10}, // red
-    };
-    static const uint8_t latex[3] = {0xFF, 0x00, 0x80}; // pink: Math keys typing LaTeX
+// While Nav, Symbols, Math or Mouse is on, light the keys that do something there and turn
+// the rest off, like the board does for Fn (mint) and M (mustard). Each kind of key has its
+// own colour, so a layer's shape is easy to remember.
+enum { BLUE, CYAN, GREEN, AMBER, ORANGE, PURPLE, PINK, RED, YELLOW, WHITE };
+static const uint8_t palette[][3] = {
+    [BLUE] = {0x00, 0x40, 0xFF}, [CYAN] = {0x00, 0xC0, 0xFF},   [GREEN] = {0x00, 0xFF, 0x30},
+    [AMBER] = {0xFF, 0x90, 0x00}, [ORANGE] = {0xFF, 0x40, 0x00}, [PURPLE] = {0x90, 0x00, 0xFF},
+    [PINK] = {0xFF, 0x00, 0x80},  [RED] = {0xFF, 0x00, 0x00},    [YELLOW] = {0xFF, 0xE0, 0x00},
+    [WHITE] = {0x60, 0x60, 0x60},
+};
 
+static uint8_t key_colour(uint8_t layer, uint16_t kc) {
+    if (IS_MODIFIER_KEYCODE(kc)) {
+        return WHITE;
+    }
+    if (kc >= MA_1 && kc < MA_END) {
+        static const uint8_t math[] = {PURPLE, GREEN, CYAN, AMBER}; // Greek, sets, relations, operators
+        return IS_LAYER_ON(SYM) ? PINK : math[math_groups[kc - MA_1]];
+    }
+    switch (layer) {
+        case NAV:
+            if (kc >= KC_RIGHT && kc <= KC_UP) return BLUE;            // arrows
+            if (IS_QK_MODS(kc) && (kc & 0xFF) >= KC_RIGHT && (kc & 0xFF) <= KC_UP) return CYAN; // word, line
+            if (kc == KC_PGUP || kc == KC_PGDN) return PURPLE;
+            return GREEN;                                              // undo ... redo, Bksp, Del
+        case SYM:
+            if (kc >= KC_1 && kc <= KC_0) return GREEN;                // numbers
+            if (IS_QK_MACRO(kc)) return CYAN;                          // -> => |> ...
+            switch (kc) {
+                case KC_LBRC: case KC_RBRC: case KC_LCBR: case KC_RCBR:
+                case KC_LPRN: case KC_RPRN: case KC_LT: case KC_GT:
+                    return ORANGE;                                     // brackets
+            }
+            return YELLOW;                                             // other symbols
+        case MOUSE:
+            if (kc >= MS_UP && kc <= MS_RGHT) return RED;              // pointer
+            if (kc >= MS_WHLU && kc <= MS_WHLR) return ORANGE;         // scroll
+            return YELLOW;                                             // clicks
+    }
+    return WHITE;
+}
+
+bool rgb_matrix_indicators_user(void) {
     uint8_t layer = get_highest_layer(layer_state);
     if (layer < NAV) {
         return true;
     }
-    const uint8_t *c = layer == MATH && IS_LAYER_ON(SYM) ? latex : colors[layer - NAV];
-    rgb_required     = 1; // shows with the backlight off too
+    rgb_required = 1; // shows with the backlight off too
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
             uint8_t led = g_led_config.matrix_co[row][col];
@@ -137,10 +168,11 @@ bool rgb_matrix_indicators_user(void) {
                 continue;
             }
             uint16_t kc = keycode_at_keymap_location(layer, row, col);
-            if (kc != KC_TRNS && kc != KC_NO) {
-                rgb_matrix_set_color(led, c[0], c[1], c[2]);
-            } else {
+            if (kc == KC_TRNS || kc == KC_NO) {
                 rgb_matrix_set_color(led, 0, 0, 0);
+            } else {
+                const uint8_t *c = palette[key_colour(layer, kc)];
+                rgb_matrix_set_color(led, c[0], c[1], c[2]);
             }
         }
     }

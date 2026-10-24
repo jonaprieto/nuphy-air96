@@ -55,6 +55,9 @@ typedef struct {
     const char *uc, *uc_shift, *tex, *tex_shift;
 } math_key_t;
 
+// colour group: 0 Greek, 1 sets, 2 relations and logic, 3 operators and brackets
+static const uint8_t math_groups[] = {1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 2, 2, 0, 0, 0, 0, 0, 0, 1, 1, 3, 0, 3, 3, 1, 0, 0, 0, 0, 0, 0, 3, 0, 0, 2, 3, 0, 0, 0, 2, 0, 0, 0, 2, 2, 2};
+
 static const math_key_t math_keys[] = {
     {"ℕ", "ℕ", "\\mathbb{N}", "\\mathbb{N}"}, // 1
     {"ℤ", "ℤ", "\\mathbb{Z}", "\\mathbb{Z}"}, // 2
