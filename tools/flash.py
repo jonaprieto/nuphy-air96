@@ -53,7 +53,7 @@ def to_bootloader():
             "Put the board in the bootloader: hold Esc while plugging in, or the button under Caps Lock."
         )
         return
-    kb.unlock(keyboard)
+    kb.unlock(keyboard.dev)
     keyboard.dev.write(b"\x00" + struct.pack("B", BOOTLOADER_JUMP) + b"\x00" * 31)
     keyboard.dev.close()
 
