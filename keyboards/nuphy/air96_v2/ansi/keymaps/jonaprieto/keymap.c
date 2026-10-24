@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include QMK_KEYBOARD_H
 #include "layer_names.h"
 #include "math_keys.h"
+#include "user_kb.h"
 
 #define NAV   (M_LAYER + 1)
 #define SYM   (NAV + 1)
@@ -111,6 +112,40 @@ const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT_96_ans
     'L', 'L', 'L', 'L', 'L', 'L',  'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R',
     'L', 'L', 'L',  '*',  'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'
 );
+
+// While Nav, Symbols, Math or Mouse is held, light the keys that do something there in the
+// layer's colour and turn the rest off, like the board does for Fn (mint) and M (mustard).
+bool rgb_matrix_indicators_user(void) {
+    static const uint8_t colors[][3] = {
+        [NAV - NAV]   = {0x00, 0x60, 0xFF}, // blue
+        [SYM - NAV]   = {0xFF, 0x60, 0x00}, // orange
+        [MATH - NAV]  = {0xA0, 0x00, 0xFF}, // purple
+        [MOUSE - NAV] = {0xFF, 0x10, 0x10}, // red
+    };
+    static const uint8_t latex[3] = {0xFF, 0x00, 0x80}; // pink: Math keys typing LaTeX
+
+    uint8_t layer = get_highest_layer(layer_state);
+    if (layer < NAV) {
+        return true;
+    }
+    const uint8_t *c = layer == MATH && IS_LAYER_ON(SYM) ? latex : colors[layer - NAV];
+    rgb_required     = 1; // shows with the backlight off too
+    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+        for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+            uint8_t led = g_led_config.matrix_co[row][col];
+            if (led == NO_LED) {
+                continue;
+            }
+            uint16_t kc = keycode_at_keymap_location(layer, row, col);
+            if (kc != KC_TRNS && kc != KC_NO) {
+                rgb_matrix_set_color(led, c[0], c[1], c[2]);
+            } else {
+                rgb_matrix_set_color(led, 0, 0, 0);
+            }
+        }
+    }
+    return true;
+}
 
 // Menu bar watcher (tools/watch.py): last key and combo, reported on request.
 static uint16_t watch_keys, watch_keycode, watch_combos, watch_combo_keycode;

@@ -27,6 +27,10 @@ make flash   # build and flash the firmware (brew install dfu-util)
 Layers 2-4 (Windows, Windows Fn, board settings) are the board's own. Combos:
 J+K is Esc, `,`+`.` is Enter, C+V is Tab.
 
+While a layer is held, the keys that do something on it light up in its colour
+and the rest go dark: Fn mint, M mustard, Nav blue, Symbols orange, Math purple,
+LaTeX pink, Mouse red.
+
 Math symbols need macOS's "Unicode Hex Input" keyboard source (System Settings >
 Keyboard > Text Input > Edit, then + and search for it), selected instead of "U.S.".
 Option+letter accents stop working there; shortcuts do not change.
