@@ -366,6 +366,236 @@
       "name": "Keep\nAwake",
       "title": "Keep the computer awake (no idle sleep or screen lock), for the current connection",
       "shortName": "Awake_Tg"
+    },
+    {
+      "name": "ℕ",
+      "title": "ℕ / ℕ   \\mathbb{N} / \\mathbb{N}",
+      "shortName": "ℕ"
+    },
+    {
+      "name": "ℤ",
+      "title": "ℤ / ℤ   \\mathbb{Z} / \\mathbb{Z}",
+      "shortName": "ℤ"
+    },
+    {
+      "name": "ℚ",
+      "title": "ℚ / ℚ   \\mathbb{Q} / \\mathbb{Q}",
+      "shortName": "ℚ"
+    },
+    {
+      "name": "ℝ",
+      "title": "ℝ / ℝ   \\mathbb{R} / \\mathbb{R}",
+      "shortName": "ℝ"
+    },
+    {
+      "name": "ℂ",
+      "title": "ℂ / ℂ   \\mathbb{C} / \\mathbb{C}",
+      "shortName": "ℂ"
+    },
+    {
+      "name": "∞",
+      "title": "∞ / ∞   \\infty / \\infty",
+      "shortName": "∞"
+    },
+    {
+      "name": "∑",
+      "title": "∑ / ∑   \\sum / \\sum",
+      "shortName": "∑"
+    },
+    {
+      "name": "×",
+      "title": "× / ×   \\times / \\times",
+      "shortName": "×"
+    },
+    {
+      "name": "∏",
+      "title": "∏ / ∏   \\prod / \\prod",
+      "shortName": "∏"
+    },
+    {
+      "name": "∫",
+      "title": "∫ / ∫   \\int / \\int",
+      "shortName": "∫"
+    },
+    {
+      "name": "→\n↔",
+      "title": "→ / ↔   \\to / \\leftrightarrow",
+      "shortName": "→"
+    },
+    {
+      "name": "≠\n≈",
+      "title": "≠ / ≈   \\neq / \\approx",
+      "shortName": "≠"
+    },
+    {
+      "name": "θ\nΘ",
+      "title": "θ / Θ   \\theta / \\Theta",
+      "shortName": "θ"
+    },
+    {
+      "name": "ω\nΩ",
+      "title": "ω / Ω   \\omega / \\Omega",
+      "shortName": "ω"
+    },
+    {
+      "name": "ε\n∃",
+      "title": "ε / ∃   \\varepsilon / \\exists",
+      "shortName": "ε"
+    },
+    {
+      "name": "ρ\nℝ",
+      "title": "ρ / ℝ   \\rho / \\mathbb{R}",
+      "shortName": "ρ"
+    },
+    {
+      "name": "τ\n⊤",
+      "title": "τ / ⊤   \\tau / \\top",
+      "shortName": "τ"
+    },
+    {
+      "name": "ψ\nΨ",
+      "title": "ψ / Ψ   \\psi / \\Psi",
+      "shortName": "ψ"
+    },
+    {
+      "name": "∪\n∩",
+      "title": "∪ / ∩   \\cup / \\cap",
+      "shortName": "∪"
+    },
+    {
+      "name": "∈\n∉",
+      "title": "∈ / ∉   \\in / \\notin",
+      "shortName": "∈"
+    },
+    {
+      "name": "∘\n∅",
+      "title": "∘ / ∅   \\circ / \\emptyset",
+      "shortName": "∘"
+    },
+    {
+      "name": "π\nΠ",
+      "title": "π / Π   \\pi / \\Pi",
+      "shortName": "π"
+    },
+    {
+      "name": "⟨\n⟦",
+      "title": "⟨ / ⟦   \\langle / \\llbracket",
+      "shortName": "⟨"
+    },
+    {
+      "name": "⟩\n⟧",
+      "title": "⟩ / ⟧   \\rangle / \\rrbracket",
+      "shortName": "⟩"
+    },
+    {
+      "name": "∖\n∣",
+      "title": "∖ / ∣   \\setminus / \\mid",
+      "shortName": "∖"
+    },
+    {
+      "name": "α\n∀",
+      "title": "α / ∀   \\alpha / \\forall",
+      "shortName": "α"
+    },
+    {
+      "name": "σ\nΣ",
+      "title": "σ / Σ   \\sigma / \\Sigma",
+      "shortName": "σ"
+    },
+    {
+      "name": "δ\nΔ",
+      "title": "δ / Δ   \\delta / \\Delta",
+      "shortName": "δ"
+    },
+    {
+      "name": "φ\nΦ",
+      "title": "φ / Φ   \\varphi / \\Phi",
+      "shortName": "φ"
+    },
+    {
+      "name": "γ\nΓ",
+      "title": "γ / Γ   \\gamma / \\Gamma",
+      "shortName": "γ"
+    },
+    {
+      "name": "η\n⊢",
+      "title": "η / ⊢   \\eta / \\vdash",
+      "shortName": "η"
+    },
+    {
+      "name": "∂\n∇",
+      "title": "∂ / ∇   \\partial / \\nabla",
+      "shortName": "∂"
+    },
+    {
+      "name": "κ\n⊗",
+      "title": "κ / ⊗   \\kappa / \\otimes",
+      "shortName": "κ"
+    },
+    {
+      "name": "λ\nΛ",
+      "title": "λ / Λ   \\lambda / \\Lambda",
+      "shortName": "λ"
+    },
+    {
+      "name": "⇒\n⇔",
+      "title": "⇒ / ⇔   \\Rightarrow / \\Leftrightarrow",
+      "shortName": "⇒"
+    },
+    {
+      "name": "′\n⁻¹",
+      "title": "′ / ⁻¹   ' / ^{-1}",
+      "shortName": "′"
+    },
+    {
+      "name": "ζ\nℤ",
+      "title": "ζ / ℤ   \\zeta / \\mathbb{Z}",
+      "shortName": "ζ"
+    },
+    {
+      "name": "ξ\nΞ",
+      "title": "ξ / Ξ   \\xi / \\Xi",
+      "shortName": "ξ"
+    },
+    {
+      "name": "χ\nℂ",
+      "title": "χ / ℂ   \\chi / \\mathbb{C}",
+      "shortName": "χ"
+    },
+    {
+      "name": "∨\n∧",
+      "title": "∨ / ∧   \\lor / \\land",
+      "shortName": "∨"
+    },
+    {
+      "name": "β\n⊥",
+      "title": "β / ⊥   \\beta / \\bot",
+      "shortName": "β"
+    },
+    {
+      "name": "ν\n¬",
+      "title": "ν / ¬   \\nu / \\neg",
+      "shortName": "ν"
+    },
+    {
+      "name": "μ\n↦",
+      "title": "μ / ↦   \\mu / \\mapsto",
+      "shortName": "μ"
+    },
+    {
+      "name": "≤\n⊆",
+      "title": "≤ / ⊆   \\leq / \\subseteq",
+      "shortName": "≤"
+    },
+    {
+      "name": "≥\n⊇",
+      "title": "≥ / ⊇   \\geq / \\supseteq",
+      "shortName": "≥"
+    },
+    {
+      "name": "≡\n≅",
+      "title": "≡ / ≅   \\equiv / \\cong",
+      "shortName": "≡"
     }
   ]
 }

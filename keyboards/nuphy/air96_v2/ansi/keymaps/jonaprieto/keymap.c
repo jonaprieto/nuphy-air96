@@ -17,8 +17,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include QMK_KEYBOARD_H
 #include "layer_names.h"
+#include "math_keys.h"
 
-#define NAV (M_LAYER + 1)
+#define NAV   (M_LAYER + 1)
+#define SYM   (NAV + 1)
+#define MATH  (SYM + 1)
+#define MOUSE (MATH + 1)
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
@@ -29,14 +33,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
    KC_TAB,    KC_Q,      KC_W,      KC_E,        KC_R,         KC_T,      KC_Y,      KC_U,        KC_I,      KC_O,       KC_P,       KC_LBRC,    KC_RBRC,     KC_BSLS,               KC_P7,     KC_P8,     KC_P9,     KC_PPLS,
    LCTL_T(KC_ESC), LCTL_T(KC_A), LALT_T(KC_S), LGUI_T(KC_D), LSFT_T(KC_F), KC_G, KC_H, RSFT_T(KC_J), RGUI_T(KC_K), RALT_T(KC_L), RCTL_T(KC_SCLN), KC_QUOT, KC_ENT,              KC_P4,     KC_P5,     KC_P6,
    KC_LSFT,              KC_Z,      KC_X,        KC_C,         KC_V,      KC_B,      KC_N,        KC_M,      KC_COMM,    KC_DOT,     KC_SLSH,    KC_RSFT,                KC_UP,      KC_P1,     KC_P2,     KC_P3,     KC_PENT,
-   KC_LCTL,   KC_LALT,   KC_LGUI,                              LT(NAV, KC_SPC),                                          KC_RGUI,    MO(1),      KC_RCTL,     KC_LEFT,   KC_DOWN,    KC_RGHT,   KC_P0,     KC_PDOT),
+   KC_LCTL,   KC_LALT,   KC_LGUI,                              LT(NAV, KC_SPC),                                          MO(SYM),    MO(1),      TT(MATH),     KC_LEFT,   KC_DOWN,    KC_RGHT,   KC_P0,     KC_PDOT),
 // layer 1 Mac Fn
 [MAC_FN] = LAYOUT_96_ansi(
    LOCK_SCR,  KC_F1,     KC_F2,     KC_F3,       KC_F4,        KC_F5,     KC_F6,     KC_F7,       KC_F8,     KC_F9,      KC_F10,     KC_F11,     KC_F12,      PRT_SCR,   KC_INS,     _______,   _______,   _______,   _______,
    _______,   LNK_BLE1,  LNK_BLE2,  LNK_BLE3,    LNK_RF,       _______,   _______,   _______,     _______,   _______,    _______,    _______,    _______,     _______,               _______,   _______,   _______,   _______,
-   LINK_PREV,  _______,   _______,   _______,     _______,      _______,   _______,   _______,     _______,   _______,    _______,    DEV_RESET,  SLEEP_MODE,  BAT_SHOW,              _______,   _______,   _______,   _______,
-   _______,   _______,   _______,   _______,     _______,      _______,   _______,   _______,     _______,   _______,    _______,    _______,    _______,                            _______,   _______,   _______,
-   MO(4),                _______,   _______,     RGB_TEST,     _______,   BAT_NUM,   _______,     MO(4),     RM_SPDD,    RM_SPDU,    _______,    MO(4),                  RM_VALU,    _______,   _______,   _______,   _______,
+   LINK_PREV,  _______,   LGUI(KC_GRV), LCTL(KC_UP), _______,   _______,   _______,   _______,     _______,   _______,    _______,    DEV_RESET,  SLEEP_MODE,  BAT_SHOW,              _______,   _______,   _______,   _______,
+   _______,   LGUI(KC_TAB), LCTL(KC_LEFT), LCTL(KC_DOWN), LCTL(KC_RGHT), _______, _______, _______,  _______,   _______,    _______,    _______,    _______,                            _______,   _______,   _______,
+   MO(4),                SCMD(LCTL(KC_4)), SCMD(KC_3), RGB_TEST,  SCMD(KC_5), BAT_NUM,   _______,     MO(4),     RM_SPDD,    RM_SPDU,    _______,    MO(4),                  RM_VALU,    _______,   _______,   _______,   _______,
    _______,   _______,   _______,                              _______,                                                  _______,    _______,    _______,     RM_NEXT,   RM_VALD,    RM_HUEU,   _______,   _______),
 // layer 2 win
 [WIN_BASE] = LAYOUT_96_ansi(
@@ -66,9 +70,33 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [NAV] = LAYOUT_96_ansi(
    _______,   _______,   _______,   _______,     _______,      _______,   _______,   _______,     _______,   _______,    _______,    _______,    _______,     _______,   _______,    _______,   _______,   _______,   _______,
    _______,   _______,   _______,   _______,     _______,      _______,   _______,   _______,     _______,   _______,    _______,    _______,    _______,     _______,               _______,   _______,   _______,   _______,
-   _______,   _______,   _______,   _______,     _______,      _______,   KC_HOME,   KC_PGDN,     KC_PGUP,   KC_END,     _______,    _______,    _______,     _______,               _______,   _______,   _______,   _______,
+   _______,   _______,   _______,   _______,     _______,      _______,   LGUI(KC_LEFT), LALT(KC_LEFT), LALT(KC_RGHT), LGUI(KC_RGHT), _______,    _______,    _______,     _______,               _______,   _______,   _______,   _______,
    _______,   KC_LCTL,   KC_LALT,   KC_LGUI,     KC_LSFT,      _______,   KC_LEFT,   KC_DOWN,     KC_UP,     KC_RGHT,    _______,    _______,    _______,                            _______,   _______,   _______,
-   _______,              _______,   _______,     _______,      _______,   _______,   KC_BSPC,     KC_DEL,    _______,    _______,    _______,    _______,                _______,    _______,   _______,   _______,   _______,
+   _______,              LGUI(KC_Z), LGUI(KC_X), LGUI(KC_C), LGUI(KC_V), SCMD(KC_Z), KC_BSPC,   KC_DEL,    KC_PGDN,    KC_PGUP,    _______,    _______,                _______,    _______,   _______,   _______,   _______,
+   _______,   _______,   _______,                              _______,                                                  MO(MOUSE),  _______,    _______,     _______,   _______,    _______,   _______,   _______),
+// layer 6 symbols + numbers (hold right Cmd); number row 6..= are Vial macros M0-M6
+[SYM] = LAYOUT_96_ansi(
+   _______,   _______,   _______,   _______,     _______,      _______,   _______,   _______,     _______,   _______,    _______,    _______,    _______,     _______,   _______,    _______,   _______,   _______,   _______,
+   _______,   KC_EXLM,   KC_AT,     KC_HASH,     KC_PERC,      KC_AMPR,   MC_0,      MC_1,        MC_2,      MC_3,       MC_4,       MC_5,       MC_6,        _______,               _______,   _______,   _______,   _______,
+   _______,   KC_CIRC,   KC_UNDS,   KC_LBRC,     KC_RBRC,      KC_DLR,    KC_PLUS,   KC_7,        KC_8,      KC_9,       KC_ASTR,    _______,    _______,     _______,               _______,   _______,   _______,   _______,
+   _______,   KC_BSLS,   KC_LCBR,   KC_LPRN,     KC_RPRN,      KC_RCBR,   KC_MINS,   KC_4,        KC_5,      KC_6,       KC_SLSH,    KC_EQL,     _______,                            _______,   _______,   _______,
+   _______,              KC_TILD,   KC_PIPE,     KC_LT,        KC_GT,     KC_GRV,    KC_0,        KC_1,      KC_2,       KC_3,       KC_DOT,     _______,                _______,    _______,   _______,   _______,   _______,
+   _______,   _______,   _______,                              _______,                                                  _______,    _______,    MO(MATH),    _______,   _______,    _______,   _______,   _______),
+// layer 7 math (hold right Ctrl, tap it twice to lock); LaTeX while Symbols is held too
+[MATH] = LAYOUT_96_ansi(
+   _______,   _______,   _______,   _______,     _______,      _______,   _______,   _______,     _______,   _______,    _______,    _______,    _______,     _______,   _______,    _______,   _______,   _______,   _______,
+   _______,   MA_1,      MA_2,      MA_3,        MA_4,         MA_5,      MA_6,      MA_7,        MA_8,      MA_9,       MA_0,       MA_MINS,    MA_EQL,      _______,               _______,   _______,   _______,   _______,
+   _______,   MA_Q,      MA_W,      MA_E,        MA_R,         MA_T,      MA_Y,      MA_U,        MA_I,      MA_O,       MA_P,       MA_LBRC,    MA_RBRC,     MA_BSLS,               _______,   _______,   _______,   _______,
+   _______,   MA_A,      MA_S,      MA_D,        MA_F,         MA_G,      MA_H,      MA_J,        MA_K,      MA_L,       MA_SCLN,    MA_QUOT,    _______,                            _______,   _______,   _______,
+   _______,              MA_Z,      MA_X,        MA_C,         MA_V,      MA_B,      MA_N,        MA_M,      MA_COMM,    MA_DOT,     MA_SLSH,    _______,                _______,    _______,   _______,   _______,   _______,
+   _______,   _______,   _______,                              _______,                                                  _______,    _______,    _______,     _______,   _______,    _______,   _______,   _______),
+// layer 8 mouse (hold Space + right Cmd)
+[MOUSE] = LAYOUT_96_ansi(
+   _______,   _______,   _______,   _______,     _______,      _______,   _______,   _______,     _______,   _______,    _______,    _______,    _______,     _______,   _______,    _______,   _______,   _______,   _______,
+   _______,   _______,   _______,   _______,     _______,      _______,   _______,   _______,     _______,   _______,    _______,    _______,    _______,     _______,               _______,   _______,   _______,   _______,
+   _______,   _______,   _______,   _______,     _______,      _______,   MS_WHLL,   MS_WHLD,     MS_WHLU,   MS_WHLR,    _______,    _______,    _______,     _______,               _______,   _______,   _______,   _______,
+   _______,   KC_LCTL,   KC_LALT,   KC_LGUI,     KC_LSFT,      _______,   MS_LEFT,   MS_DOWN,     MS_UP,     MS_RGHT,    _______,    _______,    _______,                            _______,   _______,   _______,
+   _______,              _______,   _______,     _______,      _______,   _______,   MS_BTN1,     MS_BTN2,   MS_BTN3,    _______,    _______,    _______,                _______,    _______,   _______,   _______,   _______,
    _______,   _______,   _______,                              _______,                                                  _______,    _______,    _______,     _______,   _______,    _______,   _______,   _______)
 };
 
@@ -83,3 +111,24 @@ const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT_96_ans
     'L', 'L', 'L', 'L', 'L', 'L',  'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R',
     'L', 'L', 'L',  '*',  'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'
 );
+
+// Math keys: the symbol, or its LaTeX name while Symbols is held; Shift picks the second of each pair.
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (keycode < MA_1 || keycode >= MA_END) {
+        return true;
+    }
+    if (record->event.pressed) {
+        const math_key_t *k     = &math_keys[keycode - MA_1];
+        const uint8_t     mods  = get_mods();
+        const bool        shift = (mods | get_oneshot_mods()) & MOD_MASK_SHIFT;
+        clear_mods();
+        clear_oneshot_mods();
+        if (IS_LAYER_ON(SYM)) {
+            send_string(shift ? k->tex_shift : k->tex);
+        } else {
+            send_unicode_string(shift ? k->uc_shift : k->uc);
+        }
+        set_mods(mods);
+    }
+    return false;
+}

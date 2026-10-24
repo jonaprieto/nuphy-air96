@@ -10,3 +10,10 @@
 #define VIAL_UNLOCK_COMBO_ROWS { 0, 3 }
 #define VIAL_UNLOCK_COMBO_COLS { 0, 13 }
 #define VIAL_COMBO_ENTRIES 8
+
+// Layers 6-8: Symbols + Numbers, Math, Mouse.
+#undef DYNAMIC_KEYMAP_LAYER_COUNT
+#define DYNAMIC_KEYMAP_LAYER_COUNT 9
+
+// Math keys type Unicode through macOS's "Unicode Hex Input" keyboard source.
+#define UNICODE_SELECTED_MODES UNICODE_MODE_MACOS
