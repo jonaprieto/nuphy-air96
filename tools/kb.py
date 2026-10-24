@@ -1,0 +1,76 @@
+"""Vial's own protocol code (the vial-gui submodule), for scripts.
+
+Importing this also lets Vial name custom keycodes past USER63: the board has
+41 and the math layer 46 more, and Vial stops at 64.
+"""
+
+import contextlib
+import pathlib
+import sys
+import time
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+VIAL = ROOT / "vial-gui/src/main"
+VIL = ROOT / "jonaprieto.vil"
+CACHE = pathlib.Path.home() / ".cache/nuphy-air96"
+VIAL_LOCK = CACHE / "vial.lock"  # present while the Vial window is open
+
+sys.path.insert(0, str(VIAL / "python"))
+
+from keycodes.keycodes_v5 import keycodes_v5  # noqa: E402
+from keycodes.keycodes_v6 import keycodes_v6  # noqa: E402
+
+for table in (keycodes_v5, keycodes_v6):
+    for x in range(64, 128):
+        table.kc["USER{:02}".format(x)] = table.kc["QK_KB"] + x
+
+LAYERS = ["Mac", "Mac Fn", "Win", "Win Fn", "Board", "Nav", "Symbols", "Math", "Mouse"]
+VIAL_PREFIX, UNLOCK_START, UNLOCK_POLL = 0xFE, 0x06, 0x07
+
+
+@contextlib.contextmanager
+def watcher_paused():
+    """Make the menu bar watcher let go of the keyboard while the block runs."""
+    CACHE.mkdir(parents=True, exist_ok=True)
+    VIAL_LOCK.touch()
+    try:
+        time.sleep(0.5)  # it checks the lock ten times a second
+        yield
+    finally:
+        VIAL_LOCK.unlink(missing_ok=True)
+
+
+def unlock(keyboard):
+    """Vial unlock from the terminal: hold Esc + Enter (Vial's own version is a dialog)."""
+    import struct
+
+    if keyboard.get_unlock_status():
+        return
+    print("Hold Esc + Enter until this continues...", flush=True)
+    keyboard.usb_send(keyboard.dev, struct.pack("BB", VIAL_PREFIX, UNLOCK_START), retries=20)
+    while not keyboard.usb_send(keyboard.dev, struct.pack("BB", VIAL_PREFIX, UNLOCK_POLL), retries=20)[0]:
+        time.sleep(0.1)
+
+
+def _use_terminal_unlock():
+    from unlocker import Unlocker
+
+    Unlocker.unlock = classmethod(lambda cls, keyboard: unlock(keyboard))
+
+
+def open_keyboard():
+    """The Air96 over USB as Vial's Keyboard object (layout, combos, settings loaded), or None."""
+    from editor.qmk_settings import QmkSettings
+    from util import find_vial_devices
+
+    class Resources:
+        def get_resource(self, name):
+            return str(VIAL / "resources/base" / name)
+
+    QmkSettings.initialize(Resources())
+    _use_terminal_unlock()
+    for dev in find_vial_devices({"definitions": {}}, quiet=True):
+        if "Air96" in dev.title():
+            dev.open(None)
+            return dev.keyboard
+    return None

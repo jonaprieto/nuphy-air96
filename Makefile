@@ -1,7 +1,8 @@
 KM  := jonaprieto
 BIN := nuphy_air96_v2_ansi_$(KM).bin
+PY  := .venv/bin/python
 
-.PHONY: build flash gui
+.PHONY: build flash gui save
 
 # Same image and steps as CI (qmk/.github qmk_userspace_build.yml).
 # -c: clean build, so objects stamped by the Docker VM clock never go stale.
@@ -12,11 +13,10 @@ build:
 		qmk config user.qmk_home=/userspace/qmk_firmware user.overlay_dir=/userspace >/dev/null && \
 		qmk userspace-compile -c'
 
-# Board must be in the bootloader: Fn+M+Esc for 3 s on the cable, or plug in holding Esc.
-flash: build
-	dfu-util -w -a 0 -d 0483:DF11 -s 0x08000000:leave -D $(BIN)
-
-PY := .venv/bin/python
+# Unlock with Esc + Enter when asked; the board then enters its bootloader by itself.
+# The saved layout is loaded back afterwards. FLASH_ARGS=--clear-eeprom starts from keymap.c.
+flash: build $(PY)
+	$(PY) tools/flash.py $(BIN) $(FLASH_ARGS)
 
 # Vial's source, run natively; the released Mac app is Intel-only and unsigned.
 $(PY):
@@ -25,4 +25,10 @@ $(PY):
 	uv pip install -q -p $(PY) --no-deps fbs==0.9.0
 
 gui: $(PY)
-	cd vial-gui/src/main/python && $(CURDIR)/$(PY) main.py
+	$(PY) tools/vial.py
+
+# Commit and push the layout saved from Vial (File > Save current layout).
+save:
+	git add jonaprieto.vil
+	git diff --cached --quiet && echo "layout unchanged" || { git commit -q -m "layout: update saved Vial layout" && git push -q; }
+
