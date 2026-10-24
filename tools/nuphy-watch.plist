@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Login item for the menu bar app; make watch fills in REPO and loads it. -->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.jonaprieto.nuphy-watch</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>REPO/build/nuphy-watch</string>
+        <string>REPO</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <!-- Restart after a crash, not after Quit. -->
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+    <key>ProcessType</key>
+    <string>Interactive</string>
+</dict>
+</plist>

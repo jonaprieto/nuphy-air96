@@ -8,7 +8,7 @@ the board from [ablasik/nuphy-qmk](https://github.com/ablasik/nuphy-qmk) v1.2.4.
 ```sh
 git clone --recurse-submodules git@github.com:jonaprieto/nuphy-air96.git
 make gui     # edit the layout live in Vial
-make watch   # menu bar watcher (SwiftBar)
+make watch   # menu bar app, started at login
 make flash   # build and flash the firmware (brew install dfu-util)
 ```
 
@@ -61,12 +61,15 @@ the saved layout is loaded.
 
 ## Menu bar watcher
 
-`make watch` adds a SwiftBar plugin that shows the active layer and the last
-key, and for two seconds the combo you just used. Its menu shows held
-modifiers and Caps Word, draws every layer of the current keymap in the
-browser, changes the tap-hold settings, saves the layout to `jonaprieto.vil`,
-and opens Vial. It needs the USB cable (Bluetooth carries no raw HID) and
-pauses while Vial or `make flash` uses the keyboard.
+`make watch` builds a small native menu bar app (`tools/NuphyWatch.swift`) and
+adds it as a login item, restarted if it ever crashes; Quit in its menu stops it
+until the next login. It shows the active layer and the last key, and for two
+seconds the combo you just used. Its menu shows held modifiers and Caps Word,
+draws every layer of the current keymap in the browser, changes the tap-hold
+settings, saves the layout to `jonaprieto.vil`, and opens Vial. The keyboard
+side is `tools/watch.py`, on Vial's own protocol code. It needs the USB cable
+(Bluetooth carries no raw HID) and pauses while Vial or `make flash` uses the
+keyboard.
 
 ## Upgrading the firmware base
 

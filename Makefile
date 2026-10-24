@@ -32,7 +32,12 @@ save:
 	git add jonaprieto.vil
 	git diff --cached --quiet && echo "layout unchanged" || { git commit -q -m "layout: update saved Vial layout" && git push -q; }
 
-# Menu bar watcher: link the plugin into SwiftBar's plugin folder.
-SWIFTBAR = $(shell defaults read com.ameba.SwiftBar PluginDirectory)
+# Menu bar app: built natively, started at login, restarted if it crashes.
+WATCH := com.jonaprieto.nuphy-watch
+AGENT := $(HOME)/Library/LaunchAgents/$(WATCH).plist
 watch: $(PY)
-	ln -sf "$(CURDIR)/tools/nuphy-watch.sh" "$(SWIFTBAR)/nuphy-watch.sh"
+	mkdir -p build
+	swiftc -O -o build/nuphy-watch tools/NuphyWatch.swift
+	sed 's|REPO|$(CURDIR)|g' tools/nuphy-watch.plist > "$(AGENT)"
+	launchctl bootout gui/$$(id -u)/$(WATCH) 2>/dev/null || true
+	launchctl bootstrap gui/$$(id -u) "$(AGENT)"

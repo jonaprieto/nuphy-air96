@@ -1,22 +1,25 @@
-"""Menu bar watcher for the Air96 (a SwiftBar streamable plugin, see nuphy-watch.sh).
+"""Keyboard side of the menu bar app (NuphyWatch.swift runs this and draws what it prints).
 
 Shows the active layer, the last key and the last combo; the menu opens a
 picture of the keymap, changes tap-hold settings and saves the layout. Needs
 the USB cable (Bluetooth carries no raw HID) and lets go while Vial is open.
 
-    watch.py            run as the plugin
-    watch.py ctl CMD    send CMD to the running plugin (used by the menu items)
+Prints one JSON line per change, {"title": ..., "menu": [...]}; reads menu
+commands (keymap, vial, save, set QSID VALUE) one per line on stdin.
 """
 
 import html
+import json
+import os
+import queue
 import subprocess
 import sys
+import threading
 import time
 
 import kb
 
 WATCH_CMD = 0x60  # answered by raw_hid_receive_kb in keymap.c
-COMMANDS = kb.CACHE / "watch.cmd"
 KEYMAP_HTML = kb.CACHE / "keymap.html"
 COMBO_SHOWN = 2.0  # seconds a combo stays in the menu bar title
 MODS = [(0x01, "Ctrl"), (0x02, "Shift"), (0x04, "Opt"), (0x08, "Cmd")]
@@ -26,7 +29,7 @@ SETTINGS = {
     26: "Chordal Hold",
     27: "Flow Tap",
 }
-CTL = f"bash={sys.executable} param1={__file__} param2=ctl"
+COMMANDS = queue.Queue()
 
 
 def mods_text(mods):
@@ -88,7 +91,9 @@ class Labels:
             code = Keycode.deserialize(code)
         if 0x0002 <= code <= 0x00FF:
             return self.plain(code)
-        return self(code).split("\n")[0]
+        if 0x2000 <= code <= 0x4FFF:  # mod-tap, layer-tap: the tap key
+            return self(code).split("\n")[0]
+        return self(code).replace("\n", " ")
 
 
 def poll(keyboard):
@@ -125,50 +130,48 @@ def combo_text(keyboard, labels, keycode):
     return labels.short(keycode)
 
 
-def show(title, lines):
-    print("~~~")
-    print(f"{title} | sfimage=keyboard")
-    print("---")
-    print("\n".join(lines))
-    sys.stdout.flush()
+def show(title, items):
+    """items: menu entries, or plain strings for lines that do nothing when clicked."""
+    entries = [{"title": i} if isinstance(i, str) else i for i in items]
+    print(json.dumps({"title": title, "menu": entries}), flush=True)
+
+
+SEP = {"sep": True}
 
 
 def menu(keyboard, labels, s, combo, title):
-    lines = [
+    items = [
         f"Layer: {layer_name(s['layers'])}",
         f"Last key: {labels.short(s['keycode'])}   ({s['keys']} keys since the board started)",
         f"Last combo: {combo or 'none yet'}",
     ]
     if s["mods"]:
-        lines.append(f"Held: {mods_text(s['mods'] | s['mods'] >> 4)}")
+        items.append(f"Held: {mods_text(s['mods'] | s['mods'] >> 4)}")
     if s["caps_word"]:
-        lines.append("Caps Word on")
-    lines += ["---", f"Show keymap | {CTL} param3=keymap terminal=false"]
-    lines.append(
-        f"Open Vial | bash=/usr/bin/make param1=-C param2={kb.ROOT} param3=gui terminal=false"
-    )
-    lines += ["---", "Tap-hold settings"]
+        items.append("Caps Word on")
     st = keyboard.settings
-    term = st.get(7)
-    lines.append(f"--Tapping term: {term} ms")
-    for v in (200, 225, 250, 275, 300):
-        lines.append(
-            f"----{v} ms | {CTL} param3=set param4=7 param5={v} terminal=false checked={str(v == term).lower()}"
-        )
-    for q in (22, 26):
-        on = bool(st.get(q))
-        lines.append(
-            f"--{SETTINGS[q]} | {CTL} param3=set param4={q} param5={int(not on)} terminal=false checked={str(on).lower()}"
-        )
-    flow = st.get(27)
-    lines.append(f"--Flow Tap: {flow or 'off'}{' ms' if flow else ''}")
-    for v in (0, 100, 150, 200):
-        name = f"{v} ms" if v else "off"
-        lines.append(
-            f"----{name} | {CTL} param3=set param4=27 param5={v} terminal=false checked={str(v == flow).lower()}"
-        )
-    lines += ["---", f"Save layout to {kb.VIL.name} | {CTL} param3=save terminal=false"]
-    show(title, lines)
+    term, flow = st.get(7), st.get(27)
+    settings = [
+        {
+            "title": f"Tapping term: {term} ms",
+            "items": [{"title": f"{v} ms", "cmd": f"set 7 {v}", "checked": v == term} for v in (200, 225, 250, 275, 300)],
+        },
+        *[{"title": SETTINGS[q], "cmd": f"set {q} {int(not st.get(q))}", "checked": bool(st.get(q))} for q in (22, 26)],
+        {
+            "title": f"Flow Tap: {f'{flow} ms' if flow else 'off'}",
+            "items": [{"title": f"{v} ms" if v else "off", "cmd": f"set 27 {v}", "checked": v == flow} for v in (0, 100, 150, 200)],
+        },
+    ]
+    items += [
+        SEP,
+        {"title": "Show keymap", "cmd": "keymap"},
+        {"title": "Open Vial", "cmd": "vial"},
+        SEP,
+        {"title": "Tap-hold settings", "items": settings},
+        SEP,
+        {"title": f"Save layout to {kb.VIL.name}", "cmd": "save"},
+    ]
+    show(title, items)
 
 
 def keymap_page(keyboard, labels, current):
@@ -210,14 +213,18 @@ def keymap_page(keyboard, labels, current):
     subprocess.run(["open", str(KEYMAP_HTML)])
 
 
+def read_commands():
+    for line in sys.stdin:
+        COMMANDS.put(line.split())
+    os._exit(0)  # the app is gone; sys.exit here would only end this thread
+
+
 def run_commands(keyboard, labels, layers):
-    if not COMMANDS.exists():
-        return
-    lines = COMMANDS.read_text().split("\n")
-    COMMANDS.unlink()
-    for line in filter(None, lines):
-        cmd, *args = line.split()
-        if cmd == "set":
+    while not COMMANDS.empty():
+        cmd, *args = COMMANDS.get() or [""]
+        if cmd == "vial":
+            subprocess.Popen(["/usr/bin/make", "-C", str(kb.ROOT), "gui"], start_new_session=True)
+        elif cmd == "set":
             keyboard.qmk_settings_set(int(args[0]), int(args[1]))
         elif cmd == "keymap":
             keymap_page(keyboard, labels, layers.bit_length() - 1 if layers else 0)
@@ -225,8 +232,9 @@ def run_commands(keyboard, labels, layers):
             kb.VIL.write_bytes(keyboard.save_layout())
 
 
-def plugin():
+def watch():
     kb.CACHE.mkdir(parents=True, exist_ok=True)
+    threading.Thread(target=read_commands, daemon=True).start()
     keyboard = labels = None
     last = shown = None
     combo, combo_at, combos = None, 0.0, None
@@ -295,14 +303,5 @@ def plugin():
         time.sleep(0.1)
 
 
-def main():
-    if sys.argv[1:2] == ["ctl"]:
-        kb.CACHE.mkdir(parents=True, exist_ok=True)
-        with COMMANDS.open("a") as f:
-            f.write(" ".join(sys.argv[2:]) + "\n")
-        return
-    plugin()
-
-
 if __name__ == "__main__":
-    main()
+    watch()
