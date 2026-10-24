@@ -68,6 +68,7 @@ LEGEND = {
         ("cyan", "relations and logic"),
         ("amber", "operators and brackets"),
         ("pink", "with right Cmd held: LaTeX"),
+        ("plain", "big: press the key; \u21e7 small: with Shift; corner: the key it is on"),
     ],
     8: [
         ("red", "pointer"),
@@ -111,6 +112,24 @@ def colour(layer, code):
     return LAYER_COLOUR.get(layer, "plain")
 
 
+def parts(labels, code, base):
+    """[big, small, corner] for one key: what a press types, the Shift (or hold) variant,
+    and on upper layers the base-layer key it sits on."""
+    if code in (0x0000, 0x0001):
+        return ["", "", ""]
+    corner = labels.short(base) if base not in (0x0000, 0x0001) else ""
+    i = code - 0x7E00 - BOARD_KEYCODES
+    if 0 <= i < len(KEYS):
+        plain, shifted = KEYS[i][1], KEYS[i][2]
+        return [plain, "\u21e7 " + shifted if shifted != plain else "", corner]
+    lines = labels(code).split("\n")
+    if 0x5220 <= code <= 0x523F:  # MO: "hold Symbols"
+        return [lines[-1], "hold", corner]
+    if len(lines) == 2 and code <= 0xFF:  # Vial's shifted-over-plain label, e.g. "!" over "1"
+        return [lines[1], "\u21e7 " + lines[0], corner]
+    return [lines[0], " ".join(lines[1:]), corner]
+
+
 def page(keyboard, labels):
     from keycodes.keycodes import Keycode
 
@@ -124,10 +143,11 @@ def page(keyboard, labels):
             Keycode.deserialize(keyboard.layout.get((n, k.row, k.col), "KC_NO"))
             for k in keyboard.keys
         ]
+        bases = [Keycode.deserialize(keyboard.layout.get((0, k.row, k.col), "KC_NO")) for k in keyboard.keys]
         layers.append(
             {
                 "name": kb.LAYERS[n],
-                "labels": [labels(c) for c in codes],
+                "labels": [parts(labels, c, b if n else 0) for c, b in zip(codes, bases)],
                 "colours": [PALETTE.get(colour(n, c), "") for c in codes],
                 "legend": [[PALETTE[c], text] for c, text in LEGEND.get(n, [])],
             }
@@ -177,11 +197,14 @@ h1 { font-size: 22px; font-weight: 600; margin: 0; min-width: 9em; }
 nav button { background: #26262b; color: #bbb; border: 0; border-radius: 6px; padding: 5px 10px; margin: 2px; font: inherit; cursor: pointer; }
 nav button.on { background: #ddd; color: #111; }
 #status { color: #888; }
-.kb { position: relative; width: 100%; }
+.kb { position: relative; width: 100%; container-type: inline-size; }
 .k { position: absolute; box-sizing: border-box; border-radius: 6px; background: #1e1e22; display: flex;
      flex-direction: column; align-items: center; justify-content: center; text-align: center; overflow: hidden;
-     font-size: clamp(8px, 0.95vw, 15px); line-height: 1.15; color: #fff; transition: background .12s; border: 1px solid #0003; }
+     font-size: clamp(7px, 1.35cqw, 20px); line-height: 1.15; color: #fff; transition: background .12s; border: 1px solid #0003; }
 .k.dim { color: #666; }
+.k b { font-weight: 500; font-size: 1.25em; }
+.k small { font-size: .78em; opacity: .85; margin-top: 2px; }
+.k i { position: absolute; top: 3px; left: 5px; font-style: normal; font-size: .7em; opacity: .6; }
 .k.hit { animation: hit .45s ease-out; }
 @keyframes hit { from { box-shadow: 0 0 0 4px #fff, 0 0 18px 6px #fff; transform: scale(1.08); } to { box-shadow: none; transform: none; } }
 #legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 16px; }
@@ -213,8 +236,9 @@ function draw(n, tex) {
   const L = D.layers[n];
   document.getElementById("title").textContent = tex ? "LaTeX" : n + " " + L.name;
   els.forEach((e, i) => {
-    const label = L.labels[i], c = L.colours[i];
-    e.innerHTML = label.split("\\n").map(t => t.replace(/[&<>]/g, s => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"})[s])).join("<br>");
+    const [big, small, corner] = L.labels[i], c = L.colours[i], label = big;
+    const esc = t => t.replace(/[&<>]/g, s => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"})[s]);
+    e.innerHTML = (corner ? `<i>${esc(corner)}</i>` : "") + `<b>${esc(big)}</b>` + (small ? `<small>${esc(small)}</small>` : "");
     e.style.background = c ? (tex && n === 7 && label ? D.pink : c) + "cc" : "";
     e.classList.toggle("dim", !c);
   });
@@ -228,7 +252,7 @@ D.layers.forEach((L, i) => {
   tabs.appendChild(b);
 });
 const follow = document.createElement("button");
-follow.textContent = "follow keyboard";
+follow.textContent = "following the keyboard";
 follow.onclick = () => { pinned = null; };
 tabs.appendChild(follow);
 async function tick() {
