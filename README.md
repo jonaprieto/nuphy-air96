@@ -77,9 +77,23 @@ changes the tap-hold settings, saves the layout to `jonaprieto.vil`, and opens
 Vial. Show keymap opens a live page: the current keymap with the board's real
 key positions and the same colours as the layer lighting, switching layers as
 you do and flashing each key you press (click a layer to pin it). The keyboard
-side is `tools/watch.py`, on Vial's own protocol code. It needs the USB cable
-(Bluetooth carries no raw HID) and pauses while Vial or `make flash` uses the
-keyboard.
+side is `tools/watch.py`, on Vial's own protocol code. It pauses while Vial or
+`make flash` uses the keyboard.
+
+The menu also shows typing metrics: WPM now, today and over the last 7 days, the
+share of keys corrected with Backspace, and the keys you correct most (if they
+are home-row keys, the tap/hold settings are worth a look). The keymap page has
+two heatmaps: keys by how often you type them, and by how often you correct
+them. These come from the keys the Mac gets from the Air96, so they are the same
+over USB and Bluetooth; only daily counts are kept, in
+`~/.cache/nuphy-air96/metrics.json`, never what you type. They need Input
+Monitoring (System Settings > Privacy & Security > Input Monitoring >
+nuphy-watch).
+
+Over Bluetooth the keymap page shows the layout as it was the last time the cable
+was in, and flashes keys on the base layer. The active layer, combos, held
+modifiers, tap-hold settings and saving the layout need the USB cable: Bluetooth
+carries no raw HID.
 
 ## Upgrading the firmware base
 

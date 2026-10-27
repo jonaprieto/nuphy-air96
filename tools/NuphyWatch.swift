@@ -9,8 +9,13 @@
 // It also types the math layer's symbols: the board sends math key i as F13 + i % 8 with
 // modifier set i / 8 (plus Shift for the second symbol, see keymap.c), and the symbol
 // comes from tools/math_keys.json. Typing needs Accessibility access, asked for once.
+//
+// And it passes every key the Mac gets from the Air96, over USB or Bluetooth alike, to
+// watch.py as "key USAGE 1|0" (press, release) for the typing metrics. Reading them needs
+// Input Monitoring, asked for once.
 import Carbon
 import Cocoa
+import IOKit.hid
 
 // macOS key codes of F13-F20, and keymap.c's math_mods in Carbon terms.
 let fKeys: [UInt32] = [105, 107, 113, 106, 64, 79, 80, 90]
@@ -50,9 +55,36 @@ func registerMathShortcuts(repo: String) {
     }
 }
 
+let keys = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(kIOHIDOptionsTypeNone))
+var keysOpen = false
+var sendKey: (String) -> Void = { _ in }
+
+func watchKeys() {
+    IOHIDManagerSetDeviceMatching(keys, [kIOHIDDeviceUsagePageKey: kHIDPage_GenericDesktop,
+                                         kIOHIDDeviceUsageKey: kHIDUsage_GD_Keyboard] as CFDictionary)
+    IOHIDManagerRegisterInputValueCallback(keys, { _, _, _, value in
+        let element = IOHIDValueGetElement(value)
+        let usage = IOHIDElementGetUsage(element)
+        guard IOHIDElementGetUsagePage(element) == kHIDPage_KeyboardOrKeypad, (4...0xE7).contains(usage),
+              let name = IOHIDDeviceGetProperty(IOHIDElementGetDevice(element), kIOHIDProductKey as CFString) as? String,
+              name.contains("Air96") else { return }
+        sendKey("key \(usage) \(IOHIDValueGetIntegerValue(value) != 0 ? 1 : 0)\n")
+    }, nil)
+    IOHIDManagerScheduleWithRunLoop(keys, CFRunLoopGetMain(), CFRunLoopMode.defaultMode.rawValue)
+    openKeys()
+}
+
+// Opens once Input Monitoring is granted; until then each menu update tries again.
+func openKeys() {
+    guard !keysOpen, IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted else { return }
+    keysOpen = IOHIDManagerOpen(keys, IOOptionBits(kIOHIDOptionsTypeNone)) == kIOReturnSuccess
+}
+
 final class Watch: NSObject, NSApplicationDelegate {
     let repo: String
-    let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+    // Fixed width, so the bar doesn't shift as the last key goes from "Space" to "x";
+    // fits "Symbols · Space", longer titles are cut at the end.
+    let item = NSStatusBar.system.statusItem(withLength: 130)
     var helper: Process?
     var toHelper: FileHandle?
     var buffer = Data()
@@ -64,10 +96,16 @@ final class Watch: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         item.button?.image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: "NuPhy Air96")
         item.button?.imagePosition = .imageLeading
+        item.button?.alignment = .left
+        item.button?.cell?.lineBreakMode = .byTruncatingTail
         show(["title": "\u{2013}", "menu": [["title": "Starting..."]]])
         registerMathShortcuts(repo: repo)
         // asks once; until granted, math symbols do nothing (LaTeX and everything else work)
         AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary)
+        signal(SIGPIPE, SIG_IGN)  // keys typed while watch.py restarts go nowhere, not crash the app
+        sendKey = { [weak self] line in self?.send(line) }
+        IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)  // asks once
+        watchKeys()
         start()
     }
 
@@ -84,6 +122,7 @@ final class Watch: NSObject, NSApplicationDelegate {
             DispatchQueue.main.async { self?.received(data) }
         }
         p.terminationHandler = { [weak self] _ in
+            DispatchQueue.main.async { self?.toHelper = nil }
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) { self?.start() }
         }
         do {
@@ -107,8 +146,14 @@ final class Watch: NSObject, NSApplicationDelegate {
     }
 
     func show(_ state: [String: Any]) {
+        openKeys()
         item.button?.title = " " + (state["title"] as? String ?? "")
         let menu = build(state["menu"] as? [[String: Any]] ?? [])
+        if !keysOpen {
+            menu.insertItem(.separator(), at: 0)
+            menu.insertItem(withTitle: "Typing metrics need Input Monitoring: System Settings > Privacy & Security > Input Monitoring",
+                            action: nil, keyEquivalent: "", at: 0)
+        }
         if !AXIsProcessTrusted() {
             menu.insertItem(.separator(), at: 0)
             menu.insertItem(withTitle: "Math symbols need Accessibility access: System Settings > Privacy & Security > Accessibility",
@@ -144,7 +189,11 @@ final class Watch: NSObject, NSApplicationDelegate {
 
     @objc func clicked(_ sender: NSMenuItem) {
         guard let cmd = sender.representedObject as? String else { return }
-        toHelper?.write((cmd + "\n").data(using: .utf8)!)
+        send(cmd + "\n")
+    }
+
+    func send(_ line: String) {
+        try? toHelper?.write(contentsOf: Data(line.utf8))
     }
 
     func applicationWillTerminate(_ notification: Notification) {

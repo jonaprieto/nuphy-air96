@@ -10,6 +10,7 @@ import threading
 
 import kb
 from math_keys import KEYS, group
+from metrics import MIN_TYPED
 
 BOARD_KEYCODES = 41  # custom keycodes before the math keys, as in vial.json
 
@@ -68,7 +69,10 @@ LEGEND = {
         ("cyan", "relations and logic"),
         ("amber", "operators and brackets"),
         ("pink", "with right Cmd held: LaTeX"),
-        ("plain", "big: press the key; \u21e7 small: with Shift; corner: the key it is on"),
+        (
+            "plain",
+            "big: press the key; \u21e7 small: with Shift; corner: the key it is on",
+        ),
     ],
     8: [
         ("red", "pointer"),
@@ -77,6 +81,22 @@ LEGEND = {
         ("white", "modifiers"),
     ],
 }
+# Heatmap: one hue, dark (rarely) to light (most), so the busiest keys stand out on the dark page.
+HEAT_RAMP = [
+    "#0d366b",
+    "#104281",
+    "#184f95",
+    "#1c5cab",
+    "#256abf",
+    "#2a78d6",
+    "#3987e5",
+    "#5598e7",
+    "#6da7ec",
+    "#86b6ef",
+    "#9ec5f4",
+    "#b7d3f6",
+    "#cde2fb",
+]
 BRACKETS = {0x2F, 0x30, 0x22F, 0x230, 0x226, 0x227, 0x236, 0x237}  # [ ] { } ( ) < >
 
 
@@ -125,9 +145,18 @@ def parts(labels, code, base):
     lines = labels(code).split("\n")
     if 0x5220 <= code <= 0x523F:  # MO: "hold Symbols"
         return [lines[-1], "hold", corner]
-    if len(lines) == 2 and code <= 0xFF:  # Vial's shifted-over-plain label, e.g. "!" over "1"
+    if (
+        len(lines) == 2 and code <= 0xFF
+    ):  # Vial's shifted-over-plain label, e.g. "!" over "1"
         return [lines[1], "\u21e7 " + lines[0], corner]
     return [lines[0], " ".join(lines[1:]), corner]
+
+
+def tap_usage(code):
+    """What the Mac gets when the key is tapped: the key itself, or the tap of a tap/hold key."""
+    if 0x2000 <= code <= 0x4FFF:
+        code &= 0xFF
+    return code if code <= 0xA4 else 0  # above: media and mouse keys, not keyboard keys
 
 
 def page(keyboard, labels):
@@ -137,23 +166,36 @@ def page(keyboard, labels):
         {"x": k.x, "y": k.y, "w": k.width, "h": k.height, "r": k.row, "c": k.col}
         for k in keyboard.keys
     ]
+    bases = [
+        Keycode.deserialize(keyboard.layout.get((0, k.row, k.col), "KC_NO"))
+        for k in keyboard.keys
+    ]
     layers = []
     for n in range(keyboard.layers):
         codes = [
             Keycode.deserialize(keyboard.layout.get((n, k.row, k.col), "KC_NO"))
             for k in keyboard.keys
         ]
-        bases = [Keycode.deserialize(keyboard.layout.get((0, k.row, k.col), "KC_NO")) for k in keyboard.keys]
         layers.append(
             {
                 "name": kb.LAYERS[n],
-                "labels": [parts(labels, c, b if n else 0) for c, b in zip(codes, bases)],
+                "labels": [
+                    parts(labels, c, b if n else 0) for c, b in zip(codes, bases)
+                ],
                 "colours": [PALETTE.get(colour(n, c), "") for c in codes],
                 "legend": [[PALETTE[c], text] for c, text in LEGEND.get(n, [])],
             }
         )
     data = json.dumps(
-        {"keys": keys, "layers": layers, "pink": PALETTE["pink"]}, ensure_ascii=False
+        {
+            "keys": keys,
+            "layers": layers,
+            "pink": PALETTE["pink"],
+            "usage": [tap_usage(b) for b in bases],
+            "ramp": HEAT_RAMP,
+            "min_typed": MIN_TYPED,
+        },
+        ensure_ascii=False,
     )
     return HTML.replace("/*DATA*/", data)
 
@@ -229,7 +271,9 @@ const els = D.keys.map(k => {
   kbEl.appendChild(e);
   return e;
 });
-let shown = -1, latex = false, pinned = null, keys = -1, combos = null;
+let shown = -1, latex = false, pinned = null, keys = -1, combos = null, hostKeys = -1;
+let heat = null, heatSeen = "";  // heatmap: null, "use" or "fix"
+const esc = t => t.replace(/[&<>]/g, s => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"})[s]);
 function draw(n, tex) {
   if (n === shown && tex === latex) return;
   shown = n; latex = tex;
@@ -237,35 +281,73 @@ function draw(n, tex) {
   document.getElementById("title").textContent = tex ? "LaTeX" : n + " " + L.name;
   els.forEach((e, i) => {
     const [big, small, corner] = L.labels[i], c = L.colours[i], label = big;
-    const esc = t => t.replace(/[&<>]/g, s => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"})[s]);
     e.innerHTML = (corner ? `<i>${esc(corner)}</i>` : "") + `<b>${esc(big)}</b>` + (small ? `<small>${esc(small)}</small>` : "");
     e.style.background = c ? (tex && n === 7 && label ? D.pink : c) + "cc" : "";
+    e.style.color = e.title = "";
     e.classList.toggle("dim", !c);
   });
   document.getElementById("legend").innerHTML = L.legend.map(([c, t]) => `<span style="--c:${c}">${t}</span>`).join("");
   [...tabs.children].forEach((b, i) => b.classList.toggle("on", i === n));
 }
+// Base layer coloured by how often each key was typed, or how often it was the one a
+// Backspace deleted (last 7 days, as the Mac got them: holds count as modifiers, not keys).
+function drawHeat(h) {
+  const seen = heat + JSON.stringify(h);
+  if (seen === heatSeen) return;
+  heatSeen = seen; shown = -1;
+  const count = i => h[D.usage[i]] || [0, 0];
+  const value = i => { const [n, c] = count(i); return heat === "use" ? Math.sqrt(n) : n >= D.min_typed ? c / n : 0; };
+  const top = Math.max(...els.map((_, i) => value(i))) || 1;
+  document.getElementById("title").textContent = heat === "use" ? "Most typed" : "Most corrected";
+  els.forEach((e, i) => {
+    const [n, c] = count(i), v = value(i), big = D.layers[0].labels[i][0];
+    const step = v > 0 ? Math.round((D.ramp.length - 1) * v / top) : -1;
+    const pct = n ? (100 * c / n).toFixed(1) + "%" : "";
+    e.innerHTML = `<b>${esc(big)}</b>` + (n ? `<small>${heat === "use" ? n.toLocaleString() : pct}</small>` : "");
+    e.style.background = step >= 0 ? D.ramp[step] : "";
+    e.style.color = step >= 7 ? "#111" : "";
+    e.title = n ? `${big}: typed ${n.toLocaleString()}, corrected ${c.toLocaleString()} (${pct})` : "";
+    e.classList.toggle("dim", step < 0);
+  });
+  document.getElementById("legend").innerHTML =
+    `<span style="--c:${D.ramp[0]}">${heat === "use" ? "typed less" : "corrected less"}</span>` +
+    `<span style="--c:${D.ramp[D.ramp.length - 1]}">more</span>` +
+    `<span style="--c:transparent">last 7 days; ${heat === "use" ? "" : `keys typed ${D.min_typed}+ times; `}the tap of tap/hold keys, holds count as modifiers</span>`;
+  [...tabs.children].forEach(b => b.classList.toggle("on", b.dataset.heat === heat));
+}
+function flash(i) {
+  if (i < 0) return;
+  els[i].classList.remove("hit"); void els[i].offsetWidth; els[i].classList.add("hit");
+}
 D.layers.forEach((L, i) => {
   const b = document.createElement("button");
   b.textContent = i + " " + L.name;
-  b.onclick = () => { pinned = pinned === i ? null : i; draw(i, false); };
+  b.onclick = () => { heat = null; pinned = pinned === i ? null : i; draw(i, false); };
   tabs.appendChild(b);
 });
 const follow = document.createElement("button");
 follow.textContent = "following the keyboard";
-follow.onclick = () => { pinned = null; };
+follow.onclick = () => { heat = null; pinned = null; draw(0, false); };
 tabs.appendChild(follow);
+[["use", "heatmap: typed"], ["fix", "heatmap: corrected"]].forEach(([m, text]) => {
+  const b = document.createElement("button");
+  b.textContent = text; b.dataset.heat = m;
+  b.onclick = () => { heat = heat === m ? null : m; heatSeen = ""; pinned = heat ? 0 : null; if (!heat) draw(0, false); };
+  tabs.appendChild(b);
+});
 async function tick() {
   try {
     const s = await (await fetch("state", { cache: "no-store" })).json();
-    document.getElementById("status").textContent = s.connected ? (pinned === null ? "live" : "pinned, click the tab again to follow") : "keyboard not connected over USB";
-    follow.classList.toggle("on", pinned === null);
-    if (pinned === null && s.connected) draw(s.layer, s.latex);
-    if (s.keys !== keys && keys !== -1 && s.layer === shown) {
-      const i = D.keys.findIndex(k => k.r === s.row && k.c === s.col);
-      if (i >= 0) { els[i].classList.remove("hit"); void els[i].offsetWidth; els[i].classList.add("hit"); }
-    }
-    keys = s.keys;
+    document.getElementById("status").textContent = !s.connected ? "no cable: layers don't follow, keys flash on the base layer"
+      : heat || pinned !== null ? "pinned, click the tab again to follow" : "live";
+    follow.classList.toggle("on", pinned === null && !heat);
+    if (heat) drawHeat(s.heat || {});
+    else if (pinned === null && s.connected) draw(s.layer, s.latex);
+    if (s.connected && s.keys !== keys && keys !== -1 && s.layer === shown)
+      flash(D.keys.findIndex(k => k.r === s.row && k.c === s.col));
+    if (!s.connected && s.host_keys !== hostKeys && hostKeys !== -1)
+      flash(D.usage.indexOf(s.usage));
+    keys = s.keys; hostKeys = s.host_keys;
     if (combos !== null && s.combos !== combos) {
       const c = document.getElementById("combo");
       c.textContent = s.combo; c.classList.add("show");
