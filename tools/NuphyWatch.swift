@@ -82,9 +82,12 @@ func openKeys() {
 
 final class Watch: NSObject, NSApplicationDelegate {
     let repo: String
-    // Fixed width, so the bar doesn't shift as the last key goes from "Space" to "x";
-    // fits "Symbols · Space", longer titles are cut at the end.
-    let item = NSStatusBar.system.statusItem(withLength: 130)
+    // Just the icon, unless "Show typing in menu bar" is on: then also the layer and last
+    // key, at a fixed width so the bar doesn't shift as the last key goes from "Space" to
+    // "x"; fits "Symbols · Space", longer titles are cut at the end.
+    let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+    var showTyping = UserDefaults.standard.bool(forKey: "showTyping")
+    var last: [String: Any] = [:]
     var helper: Process?
     var toHelper: FileHandle?
     var buffer = Data()
@@ -94,8 +97,9 @@ final class Watch: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        item.button?.image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: "NuPhy Air96")
-        item.button?.imagePosition = .imageLeading
+        // the default "keyboard" is 19x13 and blurs on a 1x display; this one stays sharp
+        item.button?.image = NSImage(systemSymbolName: "keyboard.fill", accessibilityDescription: "NuPhy Air96")?
+            .withSymbolConfiguration(.init(pointSize: 16, weight: .medium))
         item.button?.alignment = .left
         item.button?.cell?.lineBreakMode = .byTruncatingTail
         show(["title": "\u{2013}", "menu": [["title": "Starting..."]]])
@@ -147,7 +151,10 @@ final class Watch: NSObject, NSApplicationDelegate {
 
     func show(_ state: [String: Any]) {
         openKeys()
-        item.button?.title = " " + (state["title"] as? String ?? "")
+        last = state
+        item.length = showTyping ? 130 : NSStatusItem.variableLength
+        item.button?.imagePosition = showTyping ? .imageLeading : .imageOnly
+        item.button?.title = showTyping ? " " + (state["title"] as? String ?? "") : ""
         let menu = build(state["menu"] as? [[String: Any]] ?? [])
         if !keysOpen {
             menu.insertItem(.separator(), at: 0)
@@ -160,6 +167,9 @@ final class Watch: NSObject, NSApplicationDelegate {
                             action: nil, keyEquivalent: "", at: 0)
         }
         menu.addItem(.separator())
+        let toggle = menu.addItem(withTitle: "Show typing in menu bar", action: #selector(toggleTyping), keyEquivalent: "")
+        toggle.target = self
+        toggle.state = showTyping ? .on : .off
         menu.addItem(withTitle: "Quit NuPhy Watch", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "")
         item.menu = menu
     }
@@ -190,6 +200,12 @@ final class Watch: NSObject, NSApplicationDelegate {
     @objc func clicked(_ sender: NSMenuItem) {
         guard let cmd = sender.representedObject as? String else { return }
         send(cmd + "\n")
+    }
+
+    @objc func toggleTyping() {
+        showTyping.toggle()
+        UserDefaults.standard.set(showTyping, forKey: "showTyping")
+        show(last)
     }
 
     func send(_ line: String) {

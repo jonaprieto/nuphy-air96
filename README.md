@@ -71,9 +71,10 @@ the saved layout is loaded.
 
 `make watch` builds a small native menu bar app (`tools/NuphyWatch.swift`) and
 adds it as a login item, restarted if it ever crashes; Quit in its menu stops it
-until the next login. It shows the active layer and the last key, and for two
-seconds the combo you just used. Its menu shows held modifiers and Caps Word,
-changes the tap-hold settings, saves the layout to `jonaprieto.vil`, and opens
+until the next login. It is just a keyboard icon; with Show typing in menu bar
+(in its menu, off by default) it also shows the active layer and the last key,
+and for two seconds the combo you just used. Its menu shows held modifiers and
+Caps Word, changes the tap-hold settings, saves the layout to `jonaprieto.vil`, and opens
 Vial. Show keymap opens a live page: the current keymap with the board's real
 key positions and the same colours as the layer lighting, switching layers as
 you do and flashing each key you press (click a layer to pin it). The keyboard
