@@ -35,9 +35,13 @@ save:
 # Menu bar app: built natively, started at login, restarted if it crashes.
 WATCH := com.jonaprieto.nuphy-watch
 AGENT := $(HOME)/Library/LaunchAgents/$(WATCH).plist
+# Signed with a certificate so macOS keeps its Accessibility and Input Monitoring grants
+# across rebuilds; the ad-hoc fallback ("-") changes with every build and loses them.
+SIGN ?= $(or $(shell security find-identity -v -p codesigning | grep -v REVOKED | grep -m1 -o '[0-9A-F]\{40\}'),-)
 watch: $(PY)
 	mkdir -p build
 	swiftc -O -o build/nuphy-watch tools/NuphyWatch.swift
+	codesign -f -s "$(SIGN)" -i $(WATCH) build/nuphy-watch
 	sed 's|REPO|$(CURDIR)|g' tools/nuphy-watch.plist > "$(AGENT)"
 	launchctl bootout gui/$$(id -u)/$(WATCH) 2>/dev/null || true
 	launchctl bootstrap gui/$$(id -u) "$(AGENT)"

@@ -38,8 +38,10 @@ orange, clicks yellow. Modifiers are dim white.
 Math symbols are typed by the menu bar app (`make watch`): for each math key the
 board sends a shortcut (F13-F20 with Ctrl, Opt or Cmd) and the app types the
 symbol, in any app and over Bluetooth too. Give it Accessibility access once
-(System Settings > Privacy & Security > Accessibility > nuphy-watch); macOS may
-ask again after `make watch` rebuilds it. LaTeX output needs nothing.
+(System Settings > Privacy & Security > Accessibility > nuphy-watch). `make
+watch` signs it with your Apple Development certificate so the access survives
+rebuilds; without one it is signed ad hoc and macOS forgets it on every rebuild.
+LaTeX output needs nothing.
 
 ## How to change things
 
